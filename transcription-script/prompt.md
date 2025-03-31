@@ -8,11 +8,11 @@
 >     - **aulas**: uma lista de aulas, onde cada aula contém:
 >         - **data**: a data da aula. Caso seja informado, utilize o nome informado pelo usuário
 >         - **titulo**: o título da aula.
->         - **resumo**: um resumo detalhado da aula, formatado com Markdown, com os tópicos da aula em ordem cronológica. Caso o usuário forneça detalhes sobre a bibliografia da aula, complete as informações com elas, grife pontos importantes que foi dito que cairia ou que deve cair na prova, ou que você considere os pontos-chave da aula, caso haja algum ponto incompleto, realize uma pesquisa objetiva e deixe em um parágrafo dentro do tópico, coloque um aviso que o conteúdo desse parágrafo foi gerado por IA.
+>         - **resumo**: um resumo detalhado da aula, formatado com Markdown, com os tópicos da aula em ordem cronológica. Caso o usuário forneça detalhes sobre a bibliografia da aula, complete as informações com elas, grife pontos importantes que foi dito que cairia ou que deve cair na prova, ou que você considere os pontos-chave da aula, caso haja algum ponto incompleto, realize uma pesquisa objetiva e deixe em um parágrafo dentro do tópico, coloque um aviso que o conteúdo desse parágrafo foi gerado por IA. Caso tenha necessidade, utilize diagramas em mermaid ou códigos em linguagens de programação. tudo que for necessário para facilitar o entendimento do assunto.
 >         - **off_topic**: informações sobre assuntos que foram comentados na aula mas que não estão diretamente relacionados ao conteúdo da aula em si. Mas que podem ser considerados algo importante.
 >         - **tarefas_futuras**: tarefas e projetos e atividades mencionados para a próxima aula ou para o futuro, incluindo detalhes e descrições. Seja o mais descritivo sobre cada uma das atividades que foram pedidas, caso você tenha essa informação, coloque em negrito a data de entrega de cada uma das atividades.
->         - **datas_futuras_mencionadas**: datas futuras mencionadas para conteúdos diversos, provas, atividades, eventos, apresentações e tudo mais.
->         - **atividades**: Lista de atividades práticas que foram realizadas durante a aula. detalhando o que foi realizado, o que foi pedido, quais arquivos e conteúdos foram utilizados.
+>         - **datas_futuras_mencionadas**: datas futuras mencionadas para conteúdos diversos, provas, atividades, eventos, projetos (principalmente atividades relacionadas a provas e ao projeto interdisciplinar) apresentações e tudo mais.
+>         - **atividades**: Lista de atividades práticas que foram realizadas durante a aula. detalhando o que foi realizado, o que foi pedido, quais arquivos e conteúdos foram utilizados. O que foi dado como atividade e suas revisões
 >         - **tags**: palavras-chave relacionadas ao conteúdo da aula. 
 
 ### **Modelo de JSON esperado:**

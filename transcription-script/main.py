@@ -6,7 +6,7 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 import json
 
-print("Carregando variáveis de ambiente...")
+print("carregando variáveis de ambiente...")
 load_dotenv()
 
 with open("./prompt.md", "r", encoding="utf-8") as file:
@@ -18,11 +18,11 @@ firebase_admin.initialize_app(cred)
 client = genai.Client(api_key=os.getenv("API_KEY"))
 
 
-print("Fazendo Upload do arquivo de áudio...")
+print("fazendo upload do arquivo de áudio...")
 myfile = client.files.upload(file='./file.mp3')
 
 
-print("Gerando trascrição de áudio...")
+print("gerando transcrição de áudio...")
 response = client.models.generate_content(
   model="gemini-2.0-flash", 
   config=types.GenerateContentConfig(
@@ -33,13 +33,13 @@ response = client.models.generate_content(
 )
 
 
-print("Convertendo resposta para JSON...")
+print("convertendo resposta para JSON...")
 json_response = json.loads(response.text)
 
 print(json_response)
 
 
-print("Enviado dados para o Firebase")
+print("enviado dados para o Firebase")
 db = firestore.client()
 
 for disciplina in json_response["disciplinas"]:
@@ -49,4 +49,4 @@ for disciplina in json_response["disciplinas"]:
     # Inserindo aulas dentro da disciplina
     disciplina_ref.collection('aulas').document(aula['titulo']).set(aula)
 
-print("Aula registrada e cadastrada no Firebase com Sucesso")
+print("aula registrada e cadastrada no Firebase com sucesso")
