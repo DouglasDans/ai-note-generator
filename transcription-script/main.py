@@ -21,6 +21,7 @@ client = genai.Client(api_key=os.getenv("API_KEY"))
 print("fazendo upload do arquivo de áudio...")
 myfile = client.files.upload(file='./file.mp3')
 
+# TO-DO Adicionar variavel pro usuário digitar o nome da disciplina, o nome, data e professor da aula.
 
 print("gerando transcrição de áudio...")
 response = client.models.generate_content(
@@ -39,7 +40,7 @@ json_response = json.loads(response.text)
 print(json_response)
 
 
-print("enviado dados para o Firebase")
+print("enviando dados para o Firebase...")
 db = firestore.client()
 
 for disciplina in json_response["disciplinas"]:
