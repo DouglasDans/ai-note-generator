@@ -9,7 +9,7 @@ type Props = {
 }
 
 export default async function DisciplinaPage({ params }: Props) {
-  const { disciplina } = await params
+  const { disciplina } = params
 
   const aulas = await getAulaListByDisciplinaId(disciplina)
 

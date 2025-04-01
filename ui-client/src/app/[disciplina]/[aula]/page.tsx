@@ -15,7 +15,7 @@ type Props = {
 }
 
 export default async function AulaPage({ params }: Props) {
-  const { aula, disciplina } = await params
+  const { aula, disciplina } = params
   const aulaData = await getAulaDetailsById(disciplina, aula) as Aula
 
   return (
