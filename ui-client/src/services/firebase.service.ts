@@ -1,7 +1,13 @@
 "use server";
 
 import db from "@/config/firebase.config";
-import { collection, collectionGroup, getDocs } from "firebase/firestore";
+import {
+  collection,
+  collectionGroup,
+  doc,
+  getDoc,
+  getDocs,
+} from "firebase/firestore";
 
 export async function getAllDisciplinas() {
   const disciplinasRef = collectionGroup(db, "disciplinas");
@@ -29,6 +35,23 @@ export async function getAulaListByDisciplinaId(id: string) {
     title: aulaDoc.data().titulo,
     data: aulaDoc.data().data,
   }));
+
+  return aulas;
+}
+
+export async function getAulaDetailsById(disciplinaId: string, aulaId: string) {
+  const aulasRef = collection(db, `disciplinas/${disciplinaId}/aulas`);
+  const aulasSnapshot = await getDocs(aulasRef);
+  let aulas = {};
+
+  aulas = aulasSnapshot.docs.map((aulaDoc) => {
+    if (aulaDoc.id === aulaId) {
+      return {
+        id: aulaDoc.id,
+        ...aulaDoc.data(),
+      };
+    }
+  });
 
   return aulas;
 }
