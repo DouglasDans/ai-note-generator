@@ -5,6 +5,7 @@ import os
 import firebase_admin
 from firebase_admin import credentials, firestore
 import json
+import re
 
 print("carregando variáveis de ambiente...")
 load_dotenv()
@@ -21,7 +22,7 @@ client = genai.Client(api_key=os.getenv("API_KEY"))
 print("fazendo upload do arquivo de áudio...")
 myfile = client.files.upload(file='./file.mp3')
 
-# TO-DO Adicionar variavel pro usuário digitar o nome da disciplina, o nome, data e professor da aula.
+# TODO Adicionar variavel pro usuário digitar o nome da disciplina, o nome, data e professor da aula.
 
 print("gerando transcrição de áudio...")
 response = client.models.generate_content(
@@ -36,19 +37,42 @@ response = client.models.generate_content(
 
 print("convertendo resposta para JSON...")
 json_response = json.loads(response.text)
-print(response.text)
 
 # print(json_response)
 
+def sanitize_firestore_key(key):
+    """Remove caracteres inválidos do nome do documento Firestore."""
+    key = key.lower().strip()
+    key = re.sub(r'[^a-zA-Z0-9_-]', '_', key)
+    return key
 
-# print("enviando dados para o Firebase...")
-# db = firestore.client()
 
-# for disciplina in json_response["disciplinas"]:
-#   disciplina_ref = db.collection('disciplinas').document(disciplina['nome'])
+print("enviando dados para o Firebase...")
+db = firestore.client()
+
+for disciplina in json_response["disciplinas"]:
+    disciplina_nome = sanitize_firestore_key(disciplina['nome'])
     
-#   for aula in disciplina['aulas']:
-#     # Inserindo aulas dentro da disciplina
-#     disciplina_ref.collection('aulas').document(aula['titulo']).set(aula)
+    disciplina_ref = db.collection('disciplinas').document(disciplina_nome)
+    disciplina_ref.set({
+        "nome": disciplina['nome'],
+        "professor": disciplina['professor']
+    })
 
-# print("aula registrada e cadastrada no Firebase com sucesso")
+    for aula in disciplina['aulas']:
+        aula_titulo = aula['titulo']
+        
+        aula_ref = disciplina_ref.collection('aulas').document(aula_titulo)
+        
+        aula_ref.set({
+            "data": aula['data'],
+            "titulo": aula_titulo,
+            "resumo": aula['resumo'],
+            "off_topic": aula.get('off_topic', ""),  # Se não existir, seta uma string vazia
+            "tarefas_futuras": aula.get("tarefas_futuras", {}),
+            "datas_futuras_mencionadas": aula.get("datas_futuras_mencionadas", []),
+            "atividades_em_aula": aula.get("atividades_em_aula", ""),
+            "tags": aula.get("tags", [])
+        })
+
+print("aula registrada no Firebase com sucesso")
