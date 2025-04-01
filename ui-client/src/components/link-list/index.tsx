@@ -1,13 +1,46 @@
 import { Button } from "@mui/joy"
-import { Fragment } from "react"
 import styles from './index.module.scss'
+import Link from 'next/link'
 
-type Props = {}
+type DisciplinaCollection = {
+  nome: string
+  professor: string
+  id: string
+}
 
-export default function LinkList({ }: Props) {
+type AulaCollection = {
+  id: string
+  disciplinaId: string
+  title: string
+  data: string
+}
+
+type Props = {
+  data: Array<DisciplinaCollection | AulaCollection>
+}
+
+export default function LinkList({ data }: Props) {
   return (
     <div className={styles.container}>
-      <Button className={styles.button} variant="soft" color="primary" fullWidth>aaaa</Button>
+      {data.map((item, index) => {
+
+        return (
+          <Link
+            key={index}
+            className={styles.link}
+            href={("title" in item) ? `${item.disciplinaId}/${item.id}` : item.id}
+          >
+            {("nome" in item) && <Button className={styles.button} variant="soft" color="primary" fullWidth>
+              <span>{item.nome}</span>
+              <small>Professor(a) {item.professor}</small>
+            </Button>}
+            {("title" in item) && <Button className={styles.button} variant="soft" color="primary" fullWidth>
+              <span>{item.title}</span>
+              <small>{item.data}</small>
+            </Button>}
+          </Link>
+        )
+      })}
     </div>
   )
 }

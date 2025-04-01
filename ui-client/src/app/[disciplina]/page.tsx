@@ -1,8 +1,23 @@
+import LinkList from '@/components/link-list';
+import { getAulaListByDisciplinaId } from '@/services/firebase.service';
+import { Fragment } from 'react';
 
-type Props = {}
+type Props = {
+  params: {
+    disciplina: string
+  }
+}
 
-export default function DisciplinaPage({ }: Props) {
+export default async function DisciplinaPage({ params }: Props) {
+  const { disciplina } = await params
+
+  const aulas = await getAulaListByDisciplinaId(disciplina)
+
   return (
-    <div>DisciplinaPage</div>
+    <Fragment>
+      <h1>{disciplina}</h1>
+      <hr />
+      <LinkList data={aulas} />
+    </Fragment>
   )
 }
