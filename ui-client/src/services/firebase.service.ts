@@ -13,7 +13,8 @@ export async function getAllDisciplinas(): Promise<
   const disciplinasList: Array<DisciplinaCollection> = [];
 
   for (const disciplinaDoc of disciplinasSnapshot.docs) {
-    const disciplina: any = disciplinaDoc.data();
+    const disciplina: DisciplinaCollection =
+      disciplinaDoc.data() as DisciplinaCollection;
     disciplina.id = disciplinaDoc.id;
     disciplinasList.push(disciplina);
   }
@@ -41,19 +42,20 @@ export async function getAulaListByDisciplinaId(
 export async function getAulaDetailsById(
   disciplinaId: string,
   aulaId: string
-): Promise<Aula> {
+): Promise<Aula | null> {
   const aulasRef = collection(db, `disciplinas/${disciplinaId}/aulas`);
   const aulasSnapshot = await getDocs(aulasRef);
-  let aulas: Array<any> = [];
 
-  aulas = aulasSnapshot.docs.map((aulaDoc) => {
-    if (aulaDoc.id === aulaId) {
-      return {
-        id: aulaDoc.id,
-        ...aulaDoc.data(),
-      };
-    }
-  });
-
-  return aulas[0] || [];
+  const aula = aulasSnapshot.docs
+    .map((aulaDoc) => {
+      if (aulaDoc.id === aulaId) {
+        return {
+          id: aulaDoc.id,
+          ...aulaDoc.data(),
+        } as Aula;
+      }
+      return null;
+    })
+    .find((aula) => aula !== null);
+  return aula || null;
 }

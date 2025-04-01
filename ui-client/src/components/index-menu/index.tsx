@@ -12,9 +12,9 @@ export default function MenuIndex({ links }: Props) {
         Índice
       </MenuButton>
       <Menu size="sm">
-        {links.map(item => {
+        {links.map((item, index) => {
           return (
-            <MenuItem>
+            <MenuItem key={index}>
               <Link href={item[1]}>
                 {item[0]}
               </Link>
