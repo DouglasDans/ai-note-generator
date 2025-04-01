@@ -42,7 +42,7 @@ export async function getAulaListByDisciplinaId(id: string) {
 export async function getAulaDetailsById(disciplinaId: string, aulaId: string) {
   const aulasRef = collection(db, `disciplinas/${disciplinaId}/aulas`);
   const aulasSnapshot = await getDocs(aulasRef);
-  let aulas = {};
+  let aulas = [];
 
   aulas = aulasSnapshot.docs.map((aulaDoc) => {
     if (aulaDoc.id === aulaId) {
@@ -53,5 +53,5 @@ export async function getAulaDetailsById(disciplinaId: string, aulaId: string) {
     }
   });
 
-  return aulas;
+  return aulas[0];
 }
