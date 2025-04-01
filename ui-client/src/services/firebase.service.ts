@@ -1,31 +1,29 @@
 "use server";
 
+import { Aula } from "@/types/JsonResponse";
 import db from "@/config/firebase.config";
-import { Aula } from "../@types/JsonResponse";
-import {
-  collection,
-  collectionGroup,
-  doc,
-  getDoc,
-  getDocs,
-} from "firebase/firestore";
+import { collection, collectionGroup, getDocs } from "firebase/firestore";
+import { AulaCollection, DisciplinaCollection } from "@/types/collectionTypes";
 
-export async function getAllDisciplinas() {
+export async function getAllDisciplinas(): Promise<
+  Array<DisciplinaCollection>
+> {
   const disciplinasRef = collectionGroup(db, "disciplinas");
   const disciplinasSnapshot = await getDocs(disciplinasRef);
-  let disciplinasList: any = [];
+  const disciplinasList: Array<DisciplinaCollection> = [];
 
   for (const disciplinaDoc of disciplinasSnapshot.docs) {
-    let disciplina = disciplinaDoc.data();
+    const disciplina: any = disciplinaDoc.data();
     disciplina.id = disciplinaDoc.id;
-
     disciplinasList.push(disciplina);
   }
 
   return disciplinasList;
 }
 
-export async function getAulaListByDisciplinaId(id: string) {
+export async function getAulaListByDisciplinaId(
+  id: string
+): Promise<Array<AulaCollection>> {
   const aulasRef = collection(db, `disciplinas/${id}/aulas`);
   const aulasSnapshot = await getDocs(aulasRef);
   let aulas = [];
@@ -43,10 +41,10 @@ export async function getAulaListByDisciplinaId(id: string) {
 export async function getAulaDetailsById(
   disciplinaId: string,
   aulaId: string
-): Promise<any> {
+): Promise<Aula> {
   const aulasRef = collection(db, `disciplinas/${disciplinaId}/aulas`);
   const aulasSnapshot = await getDocs(aulasRef);
-  let aulas = [];
+  let aulas: Array<any> = [];
 
   aulas = aulasSnapshot.docs.map((aulaDoc) => {
     if (aulaDoc.id === aulaId) {
@@ -57,5 +55,5 @@ export async function getAulaDetailsById(
     }
   });
 
-  return aulas[0];
+  return aulas[0] || [];
 }

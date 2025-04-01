@@ -1,4 +1,4 @@
-import { Aula } from "@/@types/JsonResponse"
+import { Aula } from "@/types/JsonResponse"
 import { getAulaDetailsById } from "@/services/firebase.service"
 import { Fragment } from "react"
 import Markdown from "react-markdown"

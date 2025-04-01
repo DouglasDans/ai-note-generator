@@ -1,19 +1,7 @@
 import { Button } from "@mui/joy"
 import styles from './index.module.scss'
 import Link from 'next/link'
-
-type DisciplinaCollection = {
-  nome: string
-  professor: string
-  id: string
-}
-
-type AulaCollection = {
-  id: string
-  disciplinaId: string
-  title: string
-  data: string
-}
+import { AulaCollection, DisciplinaCollection } from "@/types/collectionTypes"
 
 type Props = {
   data: Array<DisciplinaCollection | AulaCollection>

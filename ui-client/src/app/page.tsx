@@ -4,7 +4,6 @@ import { Fragment } from "react";
 
 export default async function Home() {
   const disciplinas = await getAllDisciplinas();
-  console.log(disciplinas);
 
   return (
     <Fragment>

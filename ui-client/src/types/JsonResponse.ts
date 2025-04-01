@@ -1,4 +1,5 @@
 interface Disciplina {
+  id?: string;
   nome: string;
   professor: string;
   aulas?: Aula[];

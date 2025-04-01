@@ -20,9 +20,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR" data-color-scheme="dark" >
+    <html lang="pt-BR" data-color-scheme="dark" suppressHydrationWarning={true}>
       <body className={`${openSans.variable}`}>
-        <ThemeRegistry options={{ key: 'joy' }}>
+        <ThemeRegistry>
           <Box bgcolor={'background.level1'} className="main-container">
             {children}
           </Box>

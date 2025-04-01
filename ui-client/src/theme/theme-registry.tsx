@@ -1,10 +1,9 @@
 'use client';
-
-import { CacheProvider } from '@emotion/react';
+import InitColorSchemeScript from '@mui/joy/InitColorSchemeScript';
 import { CssBaseline, CssVarsProvider } from '@mui/joy';
 import { useServerInsertedHTML } from 'next/navigation';
 import createCache from '@emotion/cache';
-import React from 'react';
+import React, { Fragment } from 'react';
 
 export default function ThemeRegistry({ options, children }: { options?: any; children: React.ReactNode }) {
   const [{ cache, flush }] = React.useState(() => {
@@ -51,11 +50,12 @@ export default function ThemeRegistry({ options, children }: { options?: any; ch
   });
 
   return (
-    <CacheProvider value={cache}>
-      <CssVarsProvider disableNestedContext>
+    <Fragment>
+      <InitColorSchemeScript />
+      <CssVarsProvider>
         <CssBaseline />
         {children}
       </CssVarsProvider>
-    </CacheProvider>
+    </Fragment>
   );
 }
