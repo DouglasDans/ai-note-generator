@@ -1,58 +1,43 @@
+# Instruções para o Modelo
 
-> **Instruções para o modelo**:  
-> A partir da transcrição de áudio da aula a seguir, você deve gerar um JSON com a seguinte estrutura:
-> - **disciplinas**: uma lista de disciplinas.
-> - Para cada disciplina, inclua:
->     - **nome**: o nome da disciplina. Caso seja informado, utilize o nome informado pelo usuário
->     - **professor**: o nome do professor. Caso seja informado, utilize o nome informado pelo usuário
->     - **aulas**: uma lista de aulas, onde cada aula contém:
->         - **data**: a data da aula. Caso seja informado, utilize o nome informado pelo usuário
->         - **titulo**: o título da aula.
->         - **resumo**: um resumo detalhado da aula, formatado com Markdown, com os tópicos da aula em ordem cronológica. Caso o usuário forneça detalhes sobre a bibliografia da aula, complete as informações com elas, grife pontos importantes que foi dito que cairia ou que deve cair na prova, ou que você considere os pontos-chave da aula, caso haja algum ponto incompleto, realize uma pesquisa objetiva e deixe em um parágrafo dentro do tópico, coloque um aviso que o conteúdo desse parágrafo foi gerado por IA. Caso tenha necessidade, utilize diagramas em mermaid ou códigos em linguagens de programação. tudo que for necessário para facilitar o entendimento do assunto.
->         - **off_topic**: informações sobre assuntos que foram comentados na aula mas que não estão diretamente relacionados ao conteúdo da aula em si. Mas que podem ser considerados algo importante.
->         - **tarefas_futuras**: tarefas e projetos e atividades mencionados para a próxima aula ou para o futuro, incluindo detalhes e descrições. Seja o mais descritivo sobre cada uma das atividades que foram pedidas, caso você tenha essa informação, coloque em negrito a data de entrega de cada uma das atividades.
->         - **datas_futuras_mencionadas**: datas futuras mencionadas para conteúdos diversos, provas, atividades, eventos, projetos (principalmente atividades relacionadas a provas e ao projeto interdisciplinar) apresentações e tudo mais.
->         - **atividades**: Lista de atividades práticas que foram realizadas durante a aula. detalhando o que foi realizado, o que foi pedido, quais arquivos e conteúdos foram utilizados. O que foi dado como atividade e suas revisões
->         - **tags**: palavras-chave relacionadas ao conteúdo da aula. 
+A partir da transcrição de áudio da aula, você deve gerar um **JSON** com a estrutura especificada. **Todos os conteúdos devem ser estruturados em Markdown e injetados na estrutura do JSON.**
 
-### **Modelo de JSON esperado:**
+A ideia principal é os dados obtidos a partir da transcrição sirva de anotação para que o conteúdo seja estudado futuramente, por motivos pessoais ou por trabalhos e provas futuras, mantenha uma didática, mas também seja detalhista sobre todo o conteúdo da aula. então facilite a busca por pontos-chave.
+
+
+## Estrutura do JSON
+
+O JSON deve seguir a estrutura abaixo:
 
 ```json
 {
   "disciplinas": [
     {
-      "nome": "Desenvolvimento Web",
-      "professor": "Wilson",
+      "nome": "Nome da Disciplina (ou nome informado pelo usuário)",
+      "professor": "Nome do Professor (ou nome informado pelo usuário)",
       "aulas": [
         {
-          "data": "2025-03-31",
-          "titulo": "Introdução ao React",
-          "resumo": "### O que é React?\nReact é uma biblioteca JavaScript para construção de interfaces...",
-          "off_topic": "### Discussões paralelas\nDurante a aula, o professor comentou sobre a importância do TypeScript no desenvolvimento moderno e como ele pode ajudar a evitar erros em projetos grandes. Além disso, houve uma discussão breve sobre o mercado de trabalho e a crescente demanda por desenvolvedores que saibam React.",
+          "data": "Data da Aula (ou data informada pelo usuário)",
+          "titulo": "Título da Aula",
+          "resumo": "Markdown com resumo detalhado da aula. Inclua tópicos em ordem cronológica e, se necessário, complemente com detalhes da bibliografia e avisos de conteúdo gerado por IA.",
+          "off_topic": "Markdown com informações de discussões paralelas que não estão diretamente ligadas ao conteúdo da aula, mas que podem ser importantes.",
           "tarefas_futuras": {
-            "descricao_geral": "O professor passou algumas tarefas para a próxima aula, incluindo um pequeno projeto usando componentes.",
+            "descricao_geral": "Descrição geral das tarefas/projetos mencionados para a próxima aula ou para o futuro.",
             "detalhes": [
               {
-                "titulo": "Criar um contador em React",
-                "descricao": "Implementar um contador que aumente e diminua ao clicar nos botões, utilizando o estado do React."
-              },
-              {
-                "titulo": "Estudo sobre o Virtual DOM",
-                "descricao": "Pesquisar e escrever um resumo sobre o funcionamento do Virtual DOM e como ele otimiza a renderização."
+                "titulo": "Título da Tarefa",
+                "descricao": "Descrição detalhada da tarefa. Coloque em **negrito** a data de entrega, caso identificada."
               }
             ]
           },
           "datas_futuras_mencionadas": [
             {
-              "data": "2025-04-07",
-              "descricao": "Entrega do projeto prático de React."
-            },
-            {
-              "data": "2025-04-14",
-              "descricao": "Prova sobre fundamentos do React e JSX."
+              "data": "Data futura mencionada",
+              "descricao": "Descrição do evento, prova, atividade ou projeto relacionado."
             }
           ],
-          "tags": ["React", "Componentes", "JSX"]
+          "atividades_em_aula": "Markdown descrevendo as atividades práticas realizadas durante a aula, detalhando o que foi realizado, o que foi pedido, arquivos e conteúdos utilizados, revisões e demais informações pertinentes.",
+          "tags": ["tag1", "tag2", "..."]
         }
       ]
     }
@@ -60,25 +45,28 @@
 }
 ```
 
+## Regras para a Extração e Organização dos Dados
 
-### **Regras para o modelo**:
+1. **Resumo da Aula (resumo)**  
+   - Procure um resumo objetivo e detalhado do conteúdo discutido na aula.  
+   - Utilize formato Markdown, com tópicos organizados cronologicamente e ricos em detalhes.  
+   - Caso haja pontos incompletos, faça complementos, realize uma pesquisa objetiva e inclua em um novo parágrafo com um aviso informando que o conteúdo foi gerado por IA.
+   - Coloque palavras chave em negrito.
 
-Todos os conteúdos devem ser estuturados em Markdown e injetado na estrutura do JSON.
+2. **Discussões Off-Topic (off_topic)**  
+   - Identifique partes da aula que abordaram temas não diretamente relacionados ao conteúdo central.  
+   - Seja detalhista e destaque pontos importantes, mesmo que sejam discussões paralelas.
 
-Faça as informações a seguir com a maior riqueza de detalhes para cada um dos tópicos, porém seguindo cada uma das regras abaixo
+3. **Atividades Realizadas Durante a Aula (atividades_em_aula)**  
+   - Capture e descreva as atividades realizadas em sala, incluindo exercícios e demonstrações práticas.
 
-1. **Resumo da aula (resumo)**: O modelo vai procurar um resumo geral do conteúdo discutido. Esse resumo deve ser em formato Markdown para facilitar a leitura e a organização das ideias. Seja bem detalhalhista aqui e separe tudo em tópicos de acordo com os pontos importantes relatados na aula, quanto mais detalhes relevantes melhor.
-  
-2. **Discussões off-topic (off_topic)**: A ideia aqui é identificar partes da aula que não estão diretamente relacionadas ao conteúdo central, mas que foram discutidas pelo professor, como outras tecnologias ou questões gerais. Seja detalhista aqui, procure pontos importantes mas que não se relacionam com a aula em si.
+4. **Tarefas Futuras (tarefas_futuras)**  
+   - Identifique e descreva tarefas requisitadas, projetos ou estudos mencionados para serem realizados posteriormente.  
+   - Em cada detalhe, destaque (em **negrito**) as datas de entrega, se informadas, caso não tenha, deixe "A definir" em destaque.
 
-3. **Atividades realizadas durante a aula (atividades_em_aula)**: O modelo precisa identificar e descrever as atividades realizadas na aula, incluindo qualquer tipo de exercício ou demonstração prática feita pelos alunos.
+5. **Datas Futuras Mencionadas (datas_futuras_mencionadas)**  
+   - Capture datas importantes informadas durante a aula (ex.: entregas, provas, eventos).
+   - Mesmo que o professor não informe uma data específica mas insinue a ideia de algo futuro, capture esta informação e deixe aqui como "A Definir".
 
-4. **Tarefas futuras (tarefas_futuras)**: O modelo vai capturar tarefas, projetos ou estudos que o professor mencionou para serem feitos depois, seja para a próxima aula ou para um futuro mais distante. Coloque em negrito as datas de entrega das atividades caso o modelo consiga identificar a data.
-
-5. **Datas futuras (datas_futuras_mencionadas)**: Caso o professor tenha mencionado datas importantes, como provas ou entrega de projetos, essas datas também devem ser capturadas.
-
-6. **Flashcards (flashcards)**: A partir da transcrição, o modelo vai capturar pontos importantes da aula e gerr flashcards que exemplifiquem temas, tópicos e conteúdos importantes, pontos-chave que foram passados em aula.
-
-7. **Atividades propostas (atividades)**: Além das atividades que já foram realizadas, o modelo deve identificar atividades futuras ou tarefas que foram mencionadas de forma mais geral.
-
-8. **Tags (tags)**: O modelo deve identificar palavras-chave relacionadas ao conteúdo da aula, como frameworks ou conceitos importantes.
+6. **Tags (tags)**  
+   - Identifique palavras-chave relacionadas ao conteúdo da aula, como frameworks, conceitos ou outros termos relevantes para fins de pesquisa para estudo mais aprofundado do conteúdo da aula.

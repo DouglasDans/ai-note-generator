@@ -25,7 +25,7 @@ myfile = client.files.upload(file='./file.mp3')
 
 print("gerando transcrição de áudio...")
 response = client.models.generate_content(
-  model="gemini-2.0-flash", 
+  model="gemini-2.5-pro-exp-03-25", 
   config=types.GenerateContentConfig(
     response_mime_type= "application/json",
     system_instruction=input_text
@@ -36,18 +36,19 @@ response = client.models.generate_content(
 
 print("convertendo resposta para JSON...")
 json_response = json.loads(response.text)
+print(response.text)
 
-print(json_response)
+# print(json_response)
 
 
-print("enviando dados para o Firebase...")
-db = firestore.client()
+# print("enviando dados para o Firebase...")
+# db = firestore.client()
 
-for disciplina in json_response["disciplinas"]:
-  disciplina_ref = db.collection('disciplinas').document(disciplina['nome'])
+# for disciplina in json_response["disciplinas"]:
+#   disciplina_ref = db.collection('disciplinas').document(disciplina['nome'])
     
-  for aula in disciplina['aulas']:
-    # Inserindo aulas dentro da disciplina
-    disciplina_ref.collection('aulas').document(aula['titulo']).set(aula)
+#   for aula in disciplina['aulas']:
+#     # Inserindo aulas dentro da disciplina
+#     disciplina_ref.collection('aulas').document(aula['titulo']).set(aula)
 
-print("aula registrada e cadastrada no Firebase com sucesso")
+# print("aula registrada e cadastrada no Firebase com sucesso")
