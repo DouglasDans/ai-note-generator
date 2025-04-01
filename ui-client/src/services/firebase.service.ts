@@ -1,6 +1,7 @@
 "use server";
 
 import db from "@/config/firebase.config";
+import { Aula } from "../@types/JsonResponse";
 import {
   collection,
   collectionGroup,
@@ -39,7 +40,10 @@ export async function getAulaListByDisciplinaId(id: string) {
   return aulas;
 }
 
-export async function getAulaDetailsById(disciplinaId: string, aulaId: string) {
+export async function getAulaDetailsById(
+  disciplinaId: string,
+  aulaId: string
+): Promise<any> {
   const aulasRef = collection(db, `disciplinas/${disciplinaId}/aulas`);
   const aulasSnapshot = await getDocs(aulasRef);
   let aulas = [];
