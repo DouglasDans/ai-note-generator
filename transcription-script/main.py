@@ -19,10 +19,14 @@ firebase_admin.initialize_app(cred)
 client = genai.Client(api_key=os.getenv("API_KEY"))
 
 
+nome_disciplina = input("insira o nome da disciplina, caso ela já esteja cadastrada, coloque o nome da disciplina cadastrada: ")
+nome_professor = input("insira o nome do professor, caso já esteja cadastrado, pressione enter: ")
+data_aula = input("insira a data da aula no padrão DD-MM-YYYY: ")
+
+
 print("fazendo upload do arquivo de áudio...")
 myfile = client.files.upload(file='./file.mp3')
 
-# TODO Adicionar variavel pro usuário digitar o nome da disciplina, o nome, data e professor da aula.
 
 print("gerando transcrição de áudio...")
 response = client.models.generate_content(
@@ -51,24 +55,23 @@ print("enviando dados para o Firebase...")
 db = firestore.client()
 
 for disciplina in json_response["disciplinas"]:
-    disciplina_nome = sanitize_firestore_key(disciplina['nome'])
+    disciplina_nome = sanitize_firestore_key(nome_disciplina)
     
     disciplina_ref = db.collection('disciplinas').document(disciplina_nome)
     disciplina_ref.set({
-        "nome": disciplina['nome'],
-        "professor": disciplina['professor']
+        "nome": nome_disciplina,
+        "professor": nome_professor
     })
 
     for aula in disciplina['aulas']:
-        aula_titulo = aula['titulo']
-        
+        aula_titulo = sanitize_firestore_key(aula['titulo'])
         aula_ref = disciplina_ref.collection('aulas').document(aula_titulo)
         
         aula_ref.set({
-            "data": aula['data'],
-            "titulo": aula_titulo,
+            "data": data_aula,
+            "titulo": aula['titulo'],
             "resumo": aula['resumo'],
-            "off_topic": aula.get('off_topic', ""),  # Se não existir, seta uma string vazia
+            "off_topic": aula.get('off_topic', ""),
             "tarefas_futuras": aula.get("tarefas_futuras", {}),
             "datas_futuras_mencionadas": aula.get("datas_futuras_mencionadas", []),
             "atividades_em_aula": aula.get("atividades_em_aula", ""),
