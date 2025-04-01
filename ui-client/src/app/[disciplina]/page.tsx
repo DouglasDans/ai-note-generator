@@ -1,15 +1,16 @@
 import LinkList from '@/components/link-list';
 import { getAulaListByDisciplinaId } from '@/services/firebase.service';
+import { Params } from 'next/dist/server/request/params';
 import { Fragment } from 'react';
 
 type Props = {
-  params: {
+  params: Promise<{
     disciplina: string
-  }
+  }>
 }
 
 export default async function DisciplinaPage({ params }: Props) {
-  const { disciplina } = params
+  const { disciplina } = await params
 
   const aulas = await getAulaListByDisciplinaId(disciplina)
 

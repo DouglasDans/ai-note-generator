@@ -8,14 +8,14 @@ import { Card, CardContent, Chip, Typography } from "@mui/joy"
 import styles from './page.module.scss'
 
 type Props = {
-  params: {
+  params: Promise<{
     aula: string
     disciplina: string
-  }
+  }>
 }
 
 export default async function AulaPage({ params }: Props) {
-  const { aula, disciplina } = params
+  const { aula, disciplina } = await params
   const aulaData = await getAulaDetailsById(disciplina, aula) as Aula
 
   return (
