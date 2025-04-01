@@ -1,8 +1,12 @@
-import Image from "next/image";
-import { Button } from "@mui/joy";
+import LinkList from "@/components/link-list";
+import { Fragment } from "react";
 
 export default function Home() {
   return (
-    <Button>JoyUI Works</Button>
+    <Fragment>
+      <h1>Disciplinas registradas</h1>
+      <hr />
+      <LinkList />
+    </Fragment>
   );
 }

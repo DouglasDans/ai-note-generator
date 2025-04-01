@@ -23,7 +23,7 @@ export default function RootLayout({
     <html lang="pt-BR" data-color-scheme="dark" >
       <body className={`${openSans.variable}`}>
         <ThemeRegistry options={{ key: 'joy' }}>
-          <Box bgcolor={'background.body'}>
+          <Box bgcolor={'background.level1'} className="main-container">
             {children}
           </Box>
         </ThemeRegistry>
