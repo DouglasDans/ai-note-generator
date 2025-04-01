@@ -54,7 +54,7 @@ export default async function AulaPage({ params }: Props) {
       <div className={styles.cardContainer}>
         {aulaData.datas_futuras_mencionadas.map((item, index) => {
           return (
-            <Card variant="soft" color="warning" size="sm" key={index}>
+            <Card variant="soft" color="warning" key={index}>
               <CardContent>
                 <Typography level="title-md">{item.data}</Typography>
                 <Markdown remarkPlugins={[remarkGfm]}>{item.descricao}</Markdown>
