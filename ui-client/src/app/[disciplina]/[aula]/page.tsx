@@ -17,8 +17,6 @@ export default async function AulaPage({ params }: Props) {
   const aulaData = await getAulaDetailsById(disciplina, aula) as Aula
   console.log(aulaData);
 
-  const markdown = `Just a link: www.nasa.gov.`
-
   return (
     <Fragment>
       <h1>Disciplinas registradas</h1>
