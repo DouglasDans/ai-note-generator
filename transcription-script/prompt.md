@@ -1,17 +1,17 @@
 # Instruções para o Modelo
 
-A partir da transcrição de áudio da aula, você deve gerar um **JSON** com a estrutura especificada. **Todos os conteúdos devem ser estruturados em Markdown e injetados na estrutura do JSON.**
+A partir da transcrição de áudio da aula, você deve gerar e retorne APENAS um **JSON** puro com a estrutura especificada. **Todos os dados devem ser estruturados em Markdown e injetados na estrutura do JSON e retornar APENAS O JSON.**
 
 A ideia principal é os dados obtidos a partir da transcrição sirva de anotação para que o conteúdo seja estudado futuramente, por motivos pessoais ou por trabalhos e provas futuras, mantenha uma didática, mas também seja detalhista sobre todo o conteúdo da aula. então facilite a busca por pontos-chave.
 
 Não é necessário indicar a localização no áudio sobre a transcrição das informações.
 
+---
 
 ## Estrutura do JSON
 
-O JSON deve seguir a estrutura abaixo:
+A resposta esperada pelo modelo deve seguir rigidamente a estrutura do JSON abaixo.
 
-```json
 {
   "disciplinas": [
     {
@@ -45,7 +45,8 @@ O JSON deve seguir a estrutura abaixo:
     }
   ]
 }
-```
+
+---
 
 ## Regras para a Extração e Organização dos Dados
 
@@ -65,11 +66,14 @@ O JSON deve seguir a estrutura abaixo:
 
 4. **Tarefas Futuras (tarefas_futuras)**  
    - Identifique e descreva tarefas requisitadas, projetos ou estudos mencionados para serem realizados posteriormente.  
-   - Em cada detalhe, destaque (em **negrito**) as datas de entrega, se informadas, caso não tenha, deixe "A definir" em destaque.
+   - Qualquer citação de futuras tarefas que serão passadas, recordação de entrega de futuras tarefas deve ser antado.
+   - Em cada tarefa, destaque (em **negrito**) as datas de entrega, se informadas, caso não tenha, deixe "A definir" em destaque.
+   - Dê prioridade para qualquer atividade, requisito ou atividade relacionada ao Projeto Interdiciplinar(PI).
 
 5. **Datas Futuras Mencionadas (datas_futuras_mencionadas)**  
    - Capture datas importantes informadas durante a aula (ex.: entregas, provas, eventos).
    - Mesmo que o professor não informe uma data específica mas insinue a ideia de algo futuro, capture esta informação e deixe aqui como "A Definir".
+  - Dê prioridade para qualquer atividade, requisito, citação, aviso, recordação ou atividade relacionada ao Projeto Interdiciplinar(PI).
 
 6. **Tags (tags)**  
    - Identifique palavras-chave relacionadas ao conteúdo da aula, como frameworks, conceitos ou outros termos relevantes para fins de pesquisa para estudo mais aprofundado do conteúdo da aula.

@@ -7,7 +7,7 @@ from firebase_admin import credentials, firestore
 import json
 import re
 
-print("carregando variáveis de ambiente...")
+print("Carregando variáveis de ambiente...")
 load_dotenv()
 
 with open("./prompt.md", "r", encoding="utf-8") as file:
@@ -24,11 +24,11 @@ nome_professor = input("insira o nome do professor, caso já esteja cadastrado, 
 data_aula = input("insira a data da aula no padrão DD-MM-YYYY\n")
 
 
-print("fazendo upload do arquivo de áudio...")
+print("Fazendo upload do arquivo de áudio...")
 myfile = client.files.upload(file='./file.mp3')
 
 
-print("gerando transcrição de áudio...")
+print("Gerando transcrição de áudio...")
 response = client.models.generate_content(
   model="gemini-2.5-pro-exp-03-25", 
   config=types.GenerateContentConfig(
@@ -39,19 +39,29 @@ response = client.models.generate_content(
 )
 
 
-print("convertendo resposta para JSON...")
-json_response = json.loads(response.text)
+print("Tratando resposta gerada pela IA")
+def extrair_json(texto):
+    padrao = re.compile(r'(\{.*\})', re.DOTALL)
+    resultado = padrao.search(texto)
+    
+    if resultado:
+        json_str = resultado.group(1)
+        try:
+            return json.loads(json_str)
+        except json.JSONDecodeError as erro:
+            print("Erro ao decodificar JSON:", erro)
+    return None
 
-# print(json_response)
+json_response = extrair_json(response.text)
 
+
+print("Enviando dados para o Firebase...")
 def sanitize_firestore_key(key):
     """Remove caracteres inválidos do nome do documento Firestore."""
     key = key.lower().strip()
     key = re.sub(r'[^a-zA-Z0-9_-]', '_', key)
     return key
 
-
-print("enviando dados para o Firebase...")
 db = firestore.client()
 
 for disciplina in json_response["disciplinas"]:
@@ -78,4 +88,4 @@ for disciplina in json_response["disciplinas"]:
             "tags": aula.get("tags", [])
         })
 
-print("aula registrada no Firebase com sucesso")
+print("Aula registrada no Firebase com sucesso")
