@@ -5,3 +5,5 @@ venv/
 firebase.json
 
 *.Identifier
+
+.idea/
