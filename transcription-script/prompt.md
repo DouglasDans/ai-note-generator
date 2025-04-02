@@ -1,79 +1,136 @@
-# Instruções para o Modelo
-
-A partir da transcrição de áudio da aula, você deve gerar e retorne APENAS um **JSON** puro com a estrutura especificada. **Todos os dados devem ser estruturados em Markdown e injetados na estrutura do JSON e retornar APENAS O JSON.**
-
-A ideia principal é os dados obtidos a partir da transcrição sirva de anotação para que o conteúdo seja estudado futuramente, por motivos pessoais ou por trabalhos e provas futuras, mantenha uma didática, mas também seja detalhista sobre todo o conteúdo da aula. então facilite a busca por pontos-chave.
-
-Não é necessário indicar a localização no áudio sobre a transcrição das informações.
-
----
-
-## Estrutura do JSON
-
 A resposta esperada pelo modelo deve seguir rigidamente a estrutura do JSON abaixo.
 
 {
   "disciplinas": [
     {
-      "nome": "Nome da Disciplina (ou nome informado pelo usuário)",
-      "professor": "Nome do Professor (ou nome informado pelo usuário)",
+      "nome": "",
+      "professor": "",
       "aulas": [
         {
-          "data": "Data da Aula (ou data informada pelo usuário)",
-          "titulo": "Título da Aula",
-          "resumo": "### Markdown com resumo detalhado da aula. - Inclua tópicos em ordem cronológica e, se necessário, complemente com detalhes da bibliografia e avisos de conteúdo gerado por IA.",
-          "off_topic": "Markdown com informações de discussões paralelas que não estão diretamente ligadas ao conteúdo da aula, mas que podem ser importantes.",
+          "data": "",
+          "titulo": "",
+          "resumo": "",
+          "off_topic": "",
           "tarefas_futuras": {
-            "descricao_geral": "Descrição geral das tarefas/projetos mencionados para a próxima aula ou para o futuro.",
+            "descricao_geral": "",
             "detalhes": [
               {
-                "titulo": "Título da Tarefa",
-                "descricao": "Descrição detalhada da tarefa. Coloque em **negrito** a data de entrega, caso identificada."
+                "titulo": "",
+                "descricao": ""
               }
             ]
           },
           "datas_futuras_mencionadas": [
             {
-              "data": "Data futura mencionada",
-              "descricao": "Descrição do evento, prova, atividade ou projeto relacionado."
+              "data": "",
+              "descricao": ""
             }
           ],
-          "atividades_em_aula": "Markdown descrevendo as atividades práticas realizadas durante a aula, detalhando o que foi realizado, o que foi pedido, arquivos e conteúdos utilizados, revisões e demais informações pertinentes.",
-          "tags": ["tag1", "tag2", "..."]
+          "atividades_em_aula": "",
+          "tags": []
         }
       ]
     }
   ]
 }
 
+
 ---
 
-## Regras para a Extração e Organização dos Dados
+## Instruções Gerais
 
-1. **Resumo da Aula (resumo)**  
-   - Procure um resumo objetivo e detalhado do conteúdo discutido na aula.  
-   - Utilize formato Markdown, com tópicos organizados cronologicamente e ricos em detalhes, não separe tópicos em listas mas em parágrafos com títulos, fica mais organizado. Mas fique livre para utilizar listas dentro do tópico.
-   - Caso haja pontos incompletos ou complexos em um determinado tópico, faça complementos, realize uma pesquisa objetiva com novas informações sobre o tópico e inclua em um novo parágrafo com um aviso informando que o conteúdo foi gerado por IA logo no fim deste parágrafo.
-   - Coloque palavras chave em negrito.
-   - Caso necessáro, converta códigos em lingagem de programação. exemplifique, quando for possível, não hesite em fazer exemplos visuais, utilizando linguagens de programação ou mermaid.
+- **Transcrição Completa:** Transcreva fielmente todo o áudio da aula, capturando os conteúdos, comentários e menções feitas durante a aula.
+- Considere que a aula foi realizada na FATEC no ano de 2025. 
+- **Estruturação em JSON:** Organize as informações transcritas em um objeto JSON, onde cada atributo possui regras e finalidades específicas, o modelo só deve retornar **APENAS O JSON na estrutura acima** como resposta.
+- **Formato Markdown:** Todo o conteúdo (incluindo os resumos, listas, códigos, diagramas e outros elementos) deve ser formatado em Markdown para facilitar a leitura e a organização.
+- **Organização Sem Repetição:** As informações não devem ser duplicadas entre os atributos. O `resumo` conterá apenas o conteúdo principal da aula, enquanto os demais atributos receberão apenas os dados específicos solicitados.
+- **Ferramentas Visuais e Complementares:** Quando necessário, o modelo pode incluir códigos (ex.: SQL ou outras linguagens de programação) e diagramas em Mermaid para esclarecer conceitos. Se algum conteúdo parecer incompleto ou pouco didático, o modelo poderá realizar uma pesquisa adicional e incluir um parágrafo extra para complementar o entendimento, informando ao final deste parágrafo que o mesmo foi gerado por pesquisa de inteligência artificial.
 
-2. **Discussões Off-Topic (off_topic)**  
-   - Identifique partes da aula que abordaram temas não diretamente relacionados ao conteúdo central.  
-   - Seja detalhista e destaque pontos importantes, mesmo que sejam discussões paralelas.
+---
 
-3. **Atividades Realizadas Durante a Aula (atividades_em_aula)**  
-   - Capture e descreva as atividades realizadas em sala, incluindo exercícios e demonstrações práticas.
+## Estrutura do JSON
 
-4. **Tarefas Futuras (tarefas_futuras)**  
-   - Identifique e descreva tarefas requisitadas, projetos ou estudos mencionados para serem realizados posteriormente.  
-   - Qualquer citação de futuras tarefas que serão passadas, recordação de entrega de futuras tarefas deve ser antado.
-   - Em cada tarefa, destaque (em **negrito**) as datas de entrega, se informadas, caso não tenha, deixe "A definir" em destaque.
-   - Dê prioridade para qualquer atividade, requisito ou atividade relacionada ao Projeto Interdiciplinar(PI).
+### 0. `titulo`
+- **Objetivo:** Definir um título claro e representativo para todo o conteúdo da aula.
+- **Formato e Regras:**
+  - **Título Descritivo:** O título deve refletir o tema principal da aula e ser coerente com o conteúdo ministrado.
+  - **Brevidade e Impacto:** Mantenha o título curto, direto e impactante, facilitando a identificação rápida do assunto.
 
-5. **Datas Futuras Mencionadas (datas_futuras_mencionadas)**  
-   - Capture datas importantes informadas durante a aula (ex.: entregas, provas, eventos).
-   - Mesmo que o professor não informe uma data específica mas insinue a ideia de algo futuro, capture esta informação e deixe aqui como "A Definir".
-  - Dê prioridade para qualquer atividade, requisito, citação, aviso, recordação ou atividade relacionada ao Projeto Interdiciplinar(PI).
+---
 
-6. **Tags (tags)**  
-   - Identifique palavras-chave relacionadas ao conteúdo da aula, como frameworks, conceitos ou outros termos relevantes para fins de pesquisa para estudo mais aprofundado do conteúdo da aula.
+### 1. `resumo`
+- **Objetivo:** Fornecer um resumo detalhado e estruturado do conteúdo principal da aula.
+- **Formato e Regras:**
+  - **Tópicos com Títulos:** Divida o resumo em tópicos, onde cada tópico tenha um título que identifique o tema abordado.
+  - **Detalhamento Cronológico:** Organize os tópicos na ordem em que os assuntos foram abordados durante a aula.
+  - **Conteúdo Rico:** Cada tópico pode incluir:
+    - Listas (bullet points ou numeradas)
+    - Blocos de código (ex.: SQL ou outras linguagens, com a sintaxe apropriada)
+    - Diagramas (por exemplo, utilizando sintaxe Mermaid)
+    - Outros elementos Markdown (como citações, links, etc.)
+  - **Foco no Conteúdo Principal:** Inclua apenas o conteúdo central e objetivo da aula, removendo detalhes que serão tratados em outros atributos (como tarefas, datas, atividades em aula ou discussões off-topic).
+
+---
+
+### 2. `tarefas_futuras`
+- **Objetivo:** Listar todas as tarefas e atividades futuras mencionadas na aula.
+- **Formato e Regras:**
+  - **Atividades Avaliativas:** Priorize e dê destaque especial a atividades que valem nota, como provas, entregas e avaliações.
+  - **Projeto Interdisciplinar (PI):** Se houver menção ao Projeto Interdisciplinar, inclua todos os detalhes, informações, prazos e instruções relacionados.
+  - **Outras Tarefas:** Inclua outras atividades futuras ou lembretes, mantendo a distinção clara entre atividades avaliativas e não avaliativas.
+
+---
+
+### 3. `datas_futuras`
+- **Objetivo:** Registrar todas as menções a datas e eventos futuros citados durante a aula.
+- **Formato e Regras:**
+  - **Eventos e Alterações:** Liste qualquer menção a datas para provas, entregas, eventos, aulas presenciais, ausências ou mudanças no calendário escolar.
+  - **Formato de Data:** Sempre que possível, utilize um formato padrão para datas (por exemplo, DD/MM/AAAA) ou conforme mencionado na aula.
+  - **Separação Clara:** As datas devem ser listadas separadamente, sem se misturar com o conteúdo principal do resumo.
+
+---
+
+### 4. `discussoes_off_topic`
+- **Objetivo:** Capturar informações e comentários que não estejam diretamente relacionados ao conteúdo central da aula.
+- **Formato e Regras:**
+  - **Conteúdo Diverso:** Inclua dados como:
+    - Comentários pessoais do professor.
+    - Informações sobre acontecimentos paralelos (ex.: a aula foi interrompida, menções a assuntos não relacionados).
+    - Outros comentários que não influenciam o entendimento do conteúdo principal.
+  - **Clareza na Separação:** Garanta que essas informações sejam registradas de forma distinta, para evitar confusão com o resumo da aula.
+
+---
+
+### 5. `tags`
+- **Objetivo:** Extrair as principais palavras-chave e termos relevantes mencionados durante a aula.
+- **Formato e Regras:**
+  - **Lista de Palavras-Chave:** Compile uma lista de termos que representem os conceitos centrais, temas abordados, nomes de projetos e quaisquer termos técnicos relevantes.
+  - **Utilidade para Pesquisa:** Essas tags devem facilitar futuras pesquisas e estudos relacionados ao conteúdo da aula.
+  - **Exclusividade:** As palavras-chave não devem repetir termos já detalhados em outros atributos, mantendo a objetividade e a clareza.
+
+---
+
+### 6. `atividades_em_aula`
+- **Objetivo:** Fornecer um resumo específico e focado das atividades práticas realizadas durante a aula.
+- **Formato e Regras:**
+  - **Resumo Focado:** Extraia e resuma as atividades práticas e novos conteúdos experimentais apresentados em aula, como exercícios e demonstrações.
+  - **Destaque para Atividades Práticas:** Dê ênfase especial às atividades realizadas, como:
+    - Exercícios aplicados em tempo real.
+    - Demonstrações práticas (ex.: criação de consultas SQL, uso de ferramentas, experimentos em código).
+    - Instruções práticas dadas pelo professor.
+  - **Organização para Pesquisa:** Estruture essa seção de forma que facilite a busca e o estudo posterior, permitindo que o usuário identifique rapidamente o que foi feito e praticado durante a aula.
+  - **Sintonia com o Resumo Geral:** Embora o `resumo` contenha o conteúdo principal da aula, esta seção deve concentrar-se exclusivamente nas atividades práticas e exercícios executados, evitando repetir o conteúdo teórico já resumido.
+
+---
+
+## Regras Adicionais
+
+- **Não Duplicar Informações:** O conteúdo do `resumo` deve se concentrar no principal da aula, enquanto as informações específicas de tarefas, datas, atividades práticas e discussões off-topic devem ser segregadas nos seus respectivos atributos.
+- **Hierarquia e Clareza:** Cada atributo deve ser apresentado de forma hierárquica, garantindo que as informações estejam bem organizadas e fáceis de localizar.
+- **Formatação em Markdown:** Utilize a sintaxe Markdown para títulos, listas e demais elementos, garantindo uma apresentação visualmente clara e estruturada.
+- **Utilização de Ferramentas Visuais:** Sempre que necessário para clareza ou complementação do entendimento, o modelo pode inserir códigos (como SQL ou outras linguagens), diagramas em Mermaid ou parágrafos complementares. Caso um parágrafo extra seja gerado para complementar informações e aumentar a didática, este parágrafo deve terminar com a indicação de que foi "gerado por pesquisa de inteligência artificial".
+- **Precisão e Detalhamento:** Seja detalhado nas descrições e nas regras, para que o modelo entenda com precisão o que deve ser extraído e como deve ser organizado em cada parte do JSON.
+
+---
+
+Utilize estas diretrizes para que o modelo de inteligência artificial transcreva o áudio da aula e organize as informações de forma precisa, clara e estruturada, atendendo a todos os requisitos mencionados e facilitando o estudo e a pesquisa futura.

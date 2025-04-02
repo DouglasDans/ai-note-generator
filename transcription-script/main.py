@@ -19,9 +19,9 @@ firebase_admin.initialize_app(cred)
 client = genai.Client(api_key=os.getenv("API_KEY"))
 
 
-nome_disciplina = input("insira o nome da disciplina, caso ela já esteja cadastrada, coloque o nome da disciplina cadastrada\n")
-nome_professor = input("insira o nome do professor, caso já esteja cadastrado, pressione enter\n")
-data_aula = input("insira a data da aula no padrão DD-MM-YYYY\n")
+nome_disciplina = input("Insira o nome da disciplina, caso ela já esteja cadastrada, coloque o nome da disciplina cadastrada\n")
+nome_professor = input("Insira o nome do professor, caso já esteja cadastrado, pressione enter\n")
+data_aula = input("Insira a data da aula no padrão DD-MM-YYYY\n")
 
 
 print("Fazendo upload do arquivo de áudio...")
