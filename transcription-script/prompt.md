@@ -1,5 +1,13 @@
-A resposta esperada pelo modelo deve seguir rigidamente a estrutura do JSON abaixo.
+## **REGRA PRINCIPAL**
 
+- O JSON **deve ser retornado como uma string raw**.  
+- **A saída do modelo deve conter apenas e unicamente o JSON.**  
+- **Não utilize Markdown, texto explicativo, nem qualquer outro tipo de formatação além do JSON puro.**  
+- **Nenhuma informação extra deve ser adicionada antes ou depois do JSON.**  
+- **O modelo deve garantir que o JSON seja válido e formatado corretamente.**
+
+Modelo de JSON resposta:
+```json
 {
   "disciplinas": [
     {
@@ -33,7 +41,7 @@ A resposta esperada pelo modelo deve seguir rigidamente a estrutura do JSON abai
     }
   ]
 }
-
+```
 
 ---
 

@@ -12,6 +12,7 @@ load_dotenv()
 
 with open("./prompt.md", "r", encoding="utf-8") as file:
   input_text = file.read()
+prompt_version = "2.2"
 
 cred = credentials.Certificate("./firebase.json")
 firebase_admin.initialize_app(cred)
@@ -37,6 +38,7 @@ response = client.models.generate_content(
   ),
   contents=[myfile]
 )
+print(response.text)
 
 
 print("Tratando resposta gerada pela IA")
@@ -78,6 +80,7 @@ for disciplina in json_response["disciplinas"]:
         aula_ref = disciplina_ref.collection('aulas').document(aula_titulo)
         
         aula_ref.set({
+            "prompt_version": prompt_version,
             "data": data_aula,
             "titulo": aula['titulo'],
             "resumo": aula['resumo'],
