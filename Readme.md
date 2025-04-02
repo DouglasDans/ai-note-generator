@@ -12,7 +12,7 @@ O **Starlight Project** tem como objetivo armazenar e organizar registros detalh
 - 🧑‍💻 **Resumo de Atividades Práticas** – Documenta exercícios e práticas realizadas.
 - 📎 **Geração de Tags** – Destaca pontos-chave, facilitando pesquisas futuras.
 
----
+
 
 ## 🛠 Tecnologias Utilizadas
 
@@ -21,7 +21,6 @@ O **Starlight Project** tem como objetivo armazenar e organizar registros detalh
 - **Python** – Responsável pelo processamento dos áudios e envio para a IA.
 - **Next.js** – Interface gráfica para consulta e organização dos dados.
 
----
 
 ## 🏗 Como Configurar e Rodar o Projeto
 
@@ -68,7 +67,6 @@ Na pasta `transcription-script`, execute:
 python main.py
 ```
 
----
 
 ### 🖥 5. Executar o Frontend
 
@@ -76,18 +74,16 @@ python main.py
    ```bash
    cd ui-client
    ```
-2. Crie um arquivo `.env` com base no `env.example`.
-3. Instale as dependências:
+2. Instale as dependências:
    ```bash
    npm install
    ```
-4. Inicie o servidor de desenvolvimento:
+3. Inicie o servidor de desenvolvimento:
    ```bash
    npm run dev
    ```
-5. Acesse o frontend em: [http://localhost:3000](http://localhost:3000).
+4. Acesse o frontend em: [http://localhost:3000](http://localhost:3000).
 
----
 
 ## 📌 Contribuição
 
