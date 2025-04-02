@@ -7,6 +7,7 @@ interface Disciplina {
 
 export interface Aula {
   id?: string;
+  prompt_version: string | null
   data: string;
   titulo: string;
   resumo: string;
