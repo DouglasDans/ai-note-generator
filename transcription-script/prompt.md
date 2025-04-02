@@ -86,6 +86,8 @@ Modelo de JSON resposta:
   - **Atividades Avaliativas:** Priorize e dê destaque especial a atividades que valem nota, como provas, entregas e avaliações.
   - **Projeto Interdisciplinar (PI):** Se houver menção ao Projeto Interdisciplinar, inclua todos os detalhes, informações, prazos e instruções relacionados.
   - **Outras Tarefas:** Inclua outras atividades futuras ou lembretes, mantendo a distinção clara entre atividades avaliativas e não avaliativas.
+  - **Data de Entrega:** Sempre informe em **negrito** a data de entrega da tarefa ao final da descrição. Caso a data não seja informada, utilize **"A Definir"**.
+
 
 ---
 

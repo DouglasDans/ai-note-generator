@@ -12,7 +12,7 @@ load_dotenv()
 
 with open("./prompt.md", "r", encoding="utf-8") as file:
   input_text = file.read()
-prompt_version = "2.2"
+prompt_version = "2.3"
 
 cred = credentials.Certificate("./firebase.json")
 firebase_admin.initialize_app(cred)
