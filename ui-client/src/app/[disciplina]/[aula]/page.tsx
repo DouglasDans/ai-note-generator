@@ -1,10 +1,7 @@
 import { Aula } from "@/types/JsonResponse"
 import { getAulaDetailsById } from "@/services/firebase.service"
 import { Fragment } from "react"
-import Markdown from "react-markdown"
-import remarkGfm from "remark-gfm"
 import MenuIndex from "@/components/index-menu"
-import { Card, CardContent, Chip, Typography } from "@mui/joy"
 import styles from './page.module.scss'
 import AulaContent from "@/components/aula-content";
 
@@ -31,14 +28,14 @@ export default async function AulaPage({ params }: Props) {
           ["Atividades Realizadas em Aula", "#atividades"],
           ["Tags", "#tags"]
         ]} />
-				<div className={styles.pageDetails}>
-					{aulaData.prompt_version && <small>Versão do Prompt: {aulaData.prompt_version}</small>}
-					<small>Utilize essas informações como um norte, o resumo por IA nem sempre pode estar correto</small>
-				</div>
+        <div className={styles.pageDetails}>
+          {aulaData.prompt_version && <small>Versão do Prompt: {aulaData.prompt_version}</small>}
+          <small>Utilize essas informações como um norte, o resumo por IA nem sempre pode estar correto</small>
+        </div>
       </div>
       <hr />
 
-      <AulaContent aula={aulaData}/>
+      <AulaContent aula={aulaData} />
     </Fragment>
   )
 }
