@@ -5,6 +5,14 @@
   padding: 50px 100px;
 }
 
+pre {
+  border-radius: 0.5rem;
+  padding: 1rem;
+  overflow: scroll;
+  background-color: #171A1C;
+  color:whitesmoke;
+}
+
 @media (max-width: 820px) {
   html {
     font-size: 14px;
