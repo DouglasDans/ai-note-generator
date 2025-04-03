@@ -1,0 +1,10 @@
+.navContainer{
+  display: flex;
+  justify-content: 'flex-start';
+
+  .linkContainer{
+    a {
+      text-decoration: none;
+    }
+  }
+}

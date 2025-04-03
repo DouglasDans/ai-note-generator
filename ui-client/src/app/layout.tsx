@@ -4,6 +4,7 @@ import "./globals.scss";
 import ThemeRegistry from "@/theme/theme-registry";
 import { Box } from "@mui/joy";
 import { Analytics } from "@vercel/analytics/react"
+import Navbar from "@/components/navbar";
 
 const openSans = Open_Sans({
   variable: "--font-geist-sans",
@@ -26,6 +27,7 @@ export default function RootLayout({
         <Analytics />
         <ThemeRegistry>
           <Box bgcolor={'background.level1'} className="main-container">
+            <Navbar />
             {children}
           </Box>
         </ThemeRegistry>
