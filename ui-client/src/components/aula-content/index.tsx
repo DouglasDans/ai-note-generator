@@ -1,8 +1,6 @@
 import { Fragment } from "react";
 import styles from "./index.module.scss";
 import { Card, CardContent, Chip, Typography } from "@mui/joy";
-import Markdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import { Aula } from "@/types/JsonResponse";
 import { MDXRemote } from 'next-mdx-remote/rsc'
 
