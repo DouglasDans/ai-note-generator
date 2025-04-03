@@ -12,7 +12,7 @@ load_dotenv()
 
 with open("./prompt.md", "r", encoding="utf-8") as file:
   input_text = file.read()
-prompt_version = "2.3"
+prompt_version = "2.4"
 
 cred = credentials.Certificate("./firebase.json")
 firebase_admin.initialize_app(cred)
@@ -36,7 +36,10 @@ response = client.models.generate_content(
     response_mime_type= "application/json",
     system_instruction=input_text
   ),
-  contents=[myfile]
+  contents=[
+    myfile, 
+    "Usuário informa que a data da aula é: {data_aula}, O nome do professor da aula é: {nome_professor} e a Disiclina da aula é: {nome_disciplina}"
+    ]
 )
 print(response.text)
 
