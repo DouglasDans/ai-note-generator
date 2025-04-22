@@ -1,8 +1,10 @@
-# ✨ Starlight Project
+# ✨ AI Note Generator
+
+**Gere resumos estruturados das suas aulas a partir dos audios gravados utilizando IA**
 
 **Um assistente de IA para transcrição de áudio, geração e estruturação de texto em Markdown.**
 
-O **Starlight Project** tem como objetivo armazenar e organizar registros detalhados das aulas da faculdade. Com isso, facilita o acesso à informação passada em aula, aprimorando os estudos e a produtividade.
+O **AI Note Generator** tem como objetivo armazenar e organizar registros detalhados das aulas da faculdade. Com isso, facilita o acesso à informação passada em aula, aprimorando os estudos e a produtividade.
 
 ## 🚀 Funcionalidades
 
