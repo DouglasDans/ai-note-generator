@@ -12,7 +12,7 @@ const openSans = Open_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Starlight Project",
+  title: "AI Note Generator",
   description: "✨ Um Assistente de IA para transcrever aulas e gerar resumos estruturados em markdown",
 };
 
