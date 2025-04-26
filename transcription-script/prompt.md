@@ -5,7 +5,7 @@
 - **Não utilize Markdown, texto explicativo, nem qualquer outro tipo de formatação além do JSON puro.**  
 - **Nenhuma informação extra deve ser adicionada antes ou depois do JSON.**  
 - **O modelo deve garantir que o JSON seja válido e formatado corretamente.**
-- **Após todas as etapas terem sido realizadas, analise suas respostas, verifique se os conteúdos estão corretos e coesos e didáticos**
+- **Após todas as etapas terem sido realizadas, analise suas respostas, verifique se os conteúdos estão corretos e coesos e didáticos e de acordo com todas as regras e instruções estabelecidas**
 
 Modelo de JSON resposta:
 ```json
