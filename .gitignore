@@ -7,3 +7,4 @@ firebase.json
 *.Identifier
 
 .idea/
+generated_notes_db.json
