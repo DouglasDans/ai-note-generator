@@ -12,7 +12,7 @@ load_dotenv()
 
 with open("./prompt.md", "r", encoding="utf-8") as file:
   input_text = file.read()
-prompt_version = "2.5"
+prompt_version = "2.6"
 
 cred = credentials.Certificate("./firebase.json")
 firebase_admin.initialize_app(cred)
@@ -31,9 +31,9 @@ myfile = client.files.upload(file='./file.mp3')
 
 print("Gerando transcrição de áudio...")
 response = client.models.generate_content(
-  model="gemini-2.0-flash-thinking-exp", 
+  model="gemini-2.5-pro-preview-03-25", 
   config=types.GenerateContentConfig(
-    # response_mime_type= "application/json",
+    response_mime_type= "application/json",
     system_instruction=input_text
   ),
   contents=[

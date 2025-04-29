@@ -51,9 +51,9 @@ Modelo de JSON resposta:
 - **Transcrição Completa:** Transcreva fielmente todo o áudio da aula, capturando os conteúdos, comentários e menções feitas durante a aula.
 - Considere que a aula foi realizada na FATEC no ano de 2025. 
 - **Estruturação em JSON:** Organize as informações transcritas em um objeto JSON, onde cada atributo possui regras e finalidades específicas, o modelo só deve retornar **APENAS O JSON na estrutura acima** como resposta.
-- **Formato Markdown:** Todo o conteúdo (incluindo os resumos, listas, códigos, diagramas e outros elementos) deve ser formatado em Markdown para facilitar a leitura e a organização.
+- **Formato Markdown:** Todo o conteúdo (incluindo os resumos, listas, códigos, diagramas, tabelas e outros elementos) deve ser formatado em Markdown para facilitar a leitura e a organização.
 - **Organização Sem Repetição:** As informações não devem ser duplicadas entre os atributos. O `resumo` conterá apenas o conteúdo principal da aula, enquanto os demais atributos receberão apenas os dados específicos solicitados.
-- **Ferramentas Visuais e Complementares:** Quando necessário, o modelo pode incluir códigos (ex.: SQL ou outras linguagens de programação) e diagramas em Mermaid para esclarecer conceitos. Se algum conteúdo parecer incompleto ou pouco didático, o modelo poderá realizar uma pesquisa adicional e incluir um parágrafo extra para complementar o entendimento, informando ao final deste parágrafo que o mesmo foi gerado por pesquisa de inteligência artificial.
+- **Ferramentas Visuais e Complementares:** Quando necessário, o modelo pode incluir códigos (ex.: SQL ou outras linguagens de programação) e diagramas em Mermaid, estruturação em tabelas para esclarecer conceitos. Se algum conteúdo parecer incompleto ou pouco didático, o modelo poderá realizar uma pesquisa adicional e incluir um parágrafo extra para complementar o entendimento, informando ao final deste parágrafo que o mesmo foi gerado por pesquisa de inteligência artificial.
 
 ---
 
