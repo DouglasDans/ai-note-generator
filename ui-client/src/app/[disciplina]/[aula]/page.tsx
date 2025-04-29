@@ -14,7 +14,7 @@ type Props = {
 
 export default async function AulaPage({ params }: Props) {
   const { aula, disciplina } = await params
-  const aulaData = await getAulaDetailsById(disciplina, aula) as Aula
+  // const aulaData = await getAulaDetailsById(disciplina, aula) as Aula
 
   return (
     <Fragment>
@@ -29,8 +29,8 @@ export default async function AulaPage({ params }: Props) {
           ["Tags", "#tags"]
         ]} />
         <div className={styles.pageDetails}>
-          {aulaData.prompt_version && <small>Versão do Prompt: {aulaData.prompt_version}</small>}
-          <small>Utilize essas informações como um norte, o resumo por IA nem sempre pode estar correto</small>
+          {aulaData.prompt_version && <small>Versão do Modelo: {aulaData.prompt_version}</small>}
+          <small>Utilize essas informações como um norte, o resumo por IA nem sempre pode estar 100% correto</small>
         </div>
       </div>
       <hr />

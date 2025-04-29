@@ -1,17 +1,12 @@
 import LinkList from "@/components/link-list";
 import { Fragment } from "react";
 import json_db from '../../../generated_notes_db.json'
-import { DisciplinaCollection } from "@/types/collectionTypes";
+import { NotesDB } from "@/types/collectionTypes";
+import { JSONToDisciplinasCollectionList } from "@/mappers/jsonToTypedObject";
 
 export default async function Home() {
-  const lengthJson = Object.keys(json_db.disciplinas).length
-  const disciplinas: Array<DisciplinaCollection> = []
-
-  for (let i = 1; i < lengthJson; i++) {
-    if (json_db.disciplinas[i.toString()]) {
-      disciplinas.push(json_db.disciplinas[i.toString()])
-    }
-  }
+  const typedDb = json_db as unknown as NotesDB;
+  const disciplinas = JSONToDisciplinasCollectionList(typedDb)
 
   return (
     <Fragment>

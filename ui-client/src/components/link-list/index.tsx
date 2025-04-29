@@ -8,10 +8,11 @@ type Props = {
 }
 
 export default function LinkList({ data }: Props) {
+  console.log(data);
+
   return (
     <div className={styles.container}>
       {data.map((item, index) => {
-
         return (
           <Link
             key={index}
