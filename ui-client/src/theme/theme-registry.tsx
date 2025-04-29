@@ -9,7 +9,11 @@ export default function ThemeRegistry({ children }: PropsWithChildren) {
   return (
     <NextAppDirEmotionCacheProvider options={{ key: 'joy' }}>
       <InitColorSchemeScript />
-      <CssVarsProvider>
+      <CssVarsProvider
+        defaultMode="system"
+        disableTransitionOnChange
+        modeStorageKey="starlight-color-scheme"
+      >
         <CssBaseline />
         {children}
       </CssVarsProvider>

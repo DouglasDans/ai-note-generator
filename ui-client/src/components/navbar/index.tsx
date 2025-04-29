@@ -1,6 +1,7 @@
 import { Button } from "@mui/joy";
 import Link from "next/link";
 import styles from './index.module.scss'
+import ThemeToggle from "@/components/theme-toggle";
 
 export default function Navbar() {
   return (
@@ -11,6 +12,9 @@ export default function Navbar() {
             <span>🏠 Home</span>
           </Button>
         </Link>
+      </div>
+      <div>
+        <ThemeToggle />
       </div>
     </nav>
   )
