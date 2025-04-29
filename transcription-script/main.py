@@ -31,7 +31,7 @@ myfile = client.files.upload(file='./file.mp3')
 
 print("Gerando transcrição de áudio...")
 response = client.models.generate_content(
-  model="gemini-2.5-pro-preview-03-25", 
+  model="gemini-2.5-pro-exp-03-25", 
   config=types.GenerateContentConfig(
     response_mime_type= "application/json",
     system_instruction=input_text

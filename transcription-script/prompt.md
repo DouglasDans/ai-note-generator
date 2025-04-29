@@ -7,7 +7,7 @@
 - **O modelo deve garantir que o JSON seja válido e formatado corretamente.**
 - **Após todas as etapas terem sido realizadas, analise suas respostas, verifique se os conteúdos estão corretos e coesos e didáticos**
 
-Modelo de JSON resposta:
+Modelo de JSON resposta (apenas o JSON):
 ```json
 {
   "disciplinas": [
