@@ -3,6 +3,7 @@ import styles from "./index.module.scss";
 import { Card, CardContent, Chip, Typography } from "@mui/joy";
 import { Aula } from "@/types/JsonResponse";
 import { MDXRemote } from 'next-mdx-remote/rsc'
+import mdStyle from '@/styles/style-modules/markdown.module.scss'
 
 type Props = {
 	aula: Aula
@@ -43,15 +44,21 @@ export default async function AulaContent({ aula }: Props) {
 			<hr />
 
 			<h2 id="resumo">Resumo da Aula</h2>
-			<MDXRemote source={aula.resumo} />
+			<div className={mdStyle.markdown}>
+				<MDXRemote source={aula.resumo} />
+			</div>
 			<hr />
 
 			<h2 id="atividades">Atividades Realizadas em Aula</h2>
-			<MDXRemote source={aula.atividades_em_aula} />
+			<div className={mdStyle.markdown}>
+				<MDXRemote source={aula.atividades_em_aula} />
+			</div>
 			<hr />
 
 			<h2 id="off-topic">Discussões Off Topic</h2>
-			<MDXRemote source={aula.off_topic} />
+			<div className={mdStyle.markdown}>
+				<MDXRemote source={aula.off_topic} />
+			</div>
 			<hr />
 
 			<h2 id="tags">Tags</h2>

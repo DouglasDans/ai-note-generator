@@ -30,7 +30,7 @@ export default async function AulaPage({ params }: Props) {
         ]} />
         <div className={styles.pageDetails}>
           {aulaData.prompt_version && <small>Versão do Prompt: {aulaData.prompt_version}</small>}
-          <small>Utilize essas informações como um norte, o resumo por IA nem sempre pode estar correto</small>
+          <small>Utilize essas informações como um norte, o resumo por IA nem sempre pode estar 100% correto</small>
         </div>
       </div>
       <hr />
