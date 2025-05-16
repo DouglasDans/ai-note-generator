@@ -12,6 +12,15 @@ type Props = {
   }>
 }
 
+export async function generateMetadata({ params }: Props) {
+  const { aula, disciplina } = await params
+  const aulaData = await getAulaDetailsById(disciplina, aula) as Aula
+
+  return {
+    title: `${aulaData.titulo} | AI Note Generator`,
+  }
+}
+
 export default async function AulaPage({ params }: Props) {
   const { aula, disciplina } = await params
   const aulaData = await getAulaDetailsById(disciplina, aula) as Aula
