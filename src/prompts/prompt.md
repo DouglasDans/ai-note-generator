@@ -1,13 +1,9 @@
 ## **REGRA PRINCIPAL**
 
-- O JSON **deve ser retornado como uma string raw**.  
-- **A saída do modelo deve conter apenas e unicamente o JSON.**  
-- **Não utilize Markdown, texto explicativo, nem qualquer outro tipo de formatação além do JSON puro.**  
-- **Nenhuma informação extra deve ser adicionada antes ou depois do JSON.**  
-- **O modelo deve garantir que o JSON seja válido e formatado corretamente.**
 - **Após todas as etapas terem sido realizadas, analise suas respostas, verifique se os conteúdos estão corretos e coesos e didáticos**
 
-Modelo de JSON resposta (apenas o JSON):
+O formato de saída (JSON estruturado) já é imposto pela API via `responseSchema` —
+não é necessário reforçar isso aqui no prompt. Estrutura de referência:
 ```json
 {
   "disciplinas": [
@@ -49,8 +45,8 @@ Modelo de JSON resposta (apenas o JSON):
 ## Instruções Gerais
 
 - **Transcrição Completa:** Transcreva fielmente todo o áudio da aula, capturando os conteúdos, comentários e menções feitas durante a aula.
-- Considere que a aula foi realizada na FATEC no ano de 2025. 
-- **Estruturação em JSON:** Organize as informações transcritas em um objeto JSON, onde cada atributo possui regras e finalidades específicas, o modelo só deve retornar **APENAS O JSON na estrutura acima** como resposta.
+- {{DATA_REFERENCIA}}
+- **Estruturação em JSON:** Organize as informações transcritas em um objeto JSON, onde cada atributo possui regras e finalidades específicas (detalhadas abaixo).
 - **Formato Markdown:** Todo o conteúdo (incluindo os resumos, listas, códigos, diagramas, tabelas e outros elementos) deve ser formatado em Markdown para facilitar a leitura e a organização.
 - **Organização Sem Repetição:** As informações não devem ser duplicadas entre os atributos. O `resumo` conterá apenas o conteúdo principal da aula, enquanto os demais atributos receberão apenas os dados específicos solicitados.
 - **Ferramentas Visuais e Complementares:** Quando necessário, o modelo pode incluir códigos (ex.: SQL ou outras linguagens de programação) e diagramas em Mermaid, estruturação em tabelas para esclarecer conceitos. Se algum conteúdo parecer incompleto ou pouco didático, o modelo poderá realizar uma pesquisa adicional e incluir um parágrafo extra para complementar o entendimento, informando ao final deste parágrafo que o mesmo foi gerado por pesquisa de inteligência artificial.

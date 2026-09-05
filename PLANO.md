@@ -249,22 +249,63 @@ Nota: a config é `.mts` porque com `.ts` o Vite emitia warning de ESM carregado
 como CommonJS. O alias `@/` está configurado mas ainda não é exercitado por
 nenhum teste — a primeira importação real acontece na Fase 1.
 
-### Fase 1 — Pipeline de ingestão em TypeScript
+### Fase 1 — Pipeline de ingestão em TypeScript ✅ CONCLUÍDA
 
-Porta o `main.py` para TS como **função pura**: recebe áudio + data da gravação,
-devolve o JSON validado. Sem HTTP, sem banco, sem UI — testável isoladamente.
+Porta o `main.py` para TS como função pura: recebe áudio + data da gravação,
+devolve o JSON validado. Sem HTTP, sem banco, sem UI.
 
-- Chamada ao Gemini com `response_schema` (elimina o `extrair_json()` de regex)
-- Modelo atualizado — confirmar o ID vigente na lista viva da API, não em blog
-- Data da gravação injetada no prompt
-- Enxugar o `prompt.md`: as ~8 linhas pedindo "APENAS JSON" tornam-se
-  desnecessárias com schema nativo
+- `@google/genai` (SDK oficial e atualmente mantido, confirmado nas docs vivas)
+  substitui `google-genai` (Python)
+- Modelo: `gemini-3.8-flash` — confirmado no `.d.ts` instalado e nas docs vivas.
+  Três fetches da doc de structured output devolveram três formatos de API
+  diferentes (resumo confundindo abas/versões) — a verificação final foi feita
+  lendo `node_modules/@google/genai/dist/node/node.d.ts` diretamente, não a doc
+- `responseSchema` nativo (`src/services/ai/schema.ts`) elimina o
+  `extrair_json()` por regex
+- Data da gravação injetada no prompt via placeholder `{{DATA_REFERENCIA}}`
+  (`src/services/ai/prompt.ts`) — resolve a âncora temporal sem generalizar
+  instituição/contexto, que é trabalho da Fase 2
+- `prompt.md` enxuto: removidas as instruções de "apenas JSON, sem markdown",
+  redundantes com `responseSchema` a nível de API
+- Validação da resposta (`src/services/ai/parseAulaSummaryResponse.ts`) como
+  última linha de defesa — `responseSchema` restringe a saída mas não garante
+  formato 100% das vezes
 
-**DoD:** dado um áudio de exemplo, a função devolve JSON conforme o schema, com
-testes cobrindo o caminho feliz e falha de validação. O script Python ainda
-existe, mas já não é o caminho principal.
+**Arquivos novos:** `src/services/ai/{schema,prompt,parseAulaSummaryResponse,
+generateAulaSummary,client}.ts` + testes · `scripts/try-generate-aula-summary.ts`
 
-Criar também o `CLAUDE.md` de projeto nesta fase.
+**Decisão de escopo de teste:** só a lógica determinística é testada (montagem
+do schema, interpolação de data, validação de resposta, wiring da chamada) —
+não a chamada real ao Gemini nem a qualidade do resumo gerado pela IA, que é
+subjetiva e não determinística.
+
+**Decisão de design (delegada):** `GenAIClient` é uma interface própria com só
+os dois métodos usados (`files.upload`, `models.generateContent`), não
+`Pick<GoogleGenAI, ...>` — as classes do SDK têm campos privados, e um objeto
+fake de teste nunca as satisfaria estruturalmente. `contents` na interface usa
+o tipo `ContentListUnion` do próprio SDK (não `unknown`) para que o client real
+seja aceito sem cast.
+
+**`allowImportingTsExtensions: true`** adicionado ao `tsconfig.json`: os
+imports internos entre os módulos de `src/services/ai/` usam extensão `.ts`
+explícita, porque o script de verificação roda via `node` puro (sem bundler) e
+a resolução ESM do Node exige extensão. Seguro porque o projeto já roda com
+`noEmit: true` — quem emite é o SWC do Next, não o `tsc`. Verificado que
+`tsc --noEmit`, `vitest` e `next build` toleram os três a extensão explícita.
+
+**Verificação manual pendente:** os testes automatizados cobrem só a lógica
+determinística com um client fake — não provam que a chamada real ao Gemini
+funciona. Rodar contra um áudio de verdade antes de considerar a fase
+totalmente validada:
+```
+GEMINI_API_KEY=... npm run try:ai -- ./caminho/aula.mp3 2026-03-10
+```
+
+**DoD:** dado um áudio de exemplo, a função devolve JSON conforme o schema —
+comprovado por testes na lógica determinística; a chamada real ainda depende
+da verificação manual acima. Substitui o `main.py`, que já havia sido removido
+na unificação do repo (commit `b8ef507`) — entre aquele commit e este, não
+havia caminho de ingestão nenhum.
 
 ### Fase 2 — Schema novo
 
