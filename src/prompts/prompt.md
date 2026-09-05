@@ -3,35 +3,39 @@
 - **Após todas as etapas terem sido realizadas, analise suas respostas, verifique se os conteúdos estão corretos e coesos e didáticos**
 
 O formato de saída (JSON estruturado) já é imposto pela API via `responseSchema` —
-não é necessário reforçar isso aqui no prompt. Estrutura de referência:
+não é necessário reforçar isso aqui no prompt. Estrutura de referência (os nomes
+dos campos abaixo são os nomes reais que devem ser usados na saída):
 ```json
 {
-  "disciplinas": [
+  "full_transcript": "",
+  "courses": [
     {
-      "nome": "",
+      "name": "",
       "professor": "",
-      "aulas": [
+      "sessions": [
         {
-          "data": "",
-          "titulo": "",
-          "resumo": "",
+          "title": "",
+          "summary": "",
           "off_topic": "",
-          "tarefas_futuras": {
-            "descricao_geral": "",
-            "detalhes": [
+          "future_tasks": {
+            "overview": "",
+            "items": [
               {
-                "titulo": "",
-                "descricao": ""
+                "title": "",
+                "description": "",
+                "due_date_iso": null,
+                "due_date_original_text": ""
               }
             ]
           },
-          "datas_futuras_mencionadas": [
+          "mentioned_dates": [
             {
-              "data": "",
-              "descricao": ""
+              "date_iso": null,
+              "original_text": "",
+              "description": ""
             }
           ],
-          "atividades_em_aula": "",
+          "class_activities": "",
           "tags": []
         }
       ]
@@ -44,18 +48,18 @@ não é necessário reforçar isso aqui no prompt. Estrutura de referência:
 
 ## Instruções Gerais
 
-- **Transcrição Completa:** Transcreva fielmente todo o áudio da aula, capturando os conteúdos, comentários e menções feitas durante a aula.
+- **Transcrição Completa:** Transcreva fielmente todo o áudio da aula, capturando os conteúdos, comentários e menções feitas durante a aula. Esse texto vai para o campo `full_transcript`, no nível raiz da resposta (não dentro de cada `session`) — uma gravação gera uma transcrição só, mesmo que dela derivem múltiplas `sessions`.
 - {{DATA_REFERENCIA}}
 - **Estruturação em JSON:** Organize as informações transcritas em um objeto JSON, onde cada atributo possui regras e finalidades específicas (detalhadas abaixo).
 - **Formato Markdown:** Todo o conteúdo (incluindo os resumos, listas, códigos, diagramas, tabelas e outros elementos) deve ser formatado em Markdown para facilitar a leitura e a organização.
-- **Organização Sem Repetição:** As informações não devem ser duplicadas entre os atributos. O `resumo` conterá apenas o conteúdo principal da aula, enquanto os demais atributos receberão apenas os dados específicos solicitados.
+- **Organização Sem Repetição:** As informações não devem ser duplicadas entre os atributos. O `summary` conterá apenas o conteúdo principal da aula, enquanto os demais atributos receberão apenas os dados específicos solicitados.
 - **Ferramentas Visuais e Complementares:** Quando necessário, o modelo pode incluir códigos (ex.: SQL ou outras linguagens de programação) e diagramas em Mermaid, estruturação em tabelas para esclarecer conceitos. Se algum conteúdo parecer incompleto ou pouco didático, o modelo poderá realizar uma pesquisa adicional e incluir um parágrafo extra para complementar o entendimento, informando ao final deste parágrafo que o mesmo foi gerado por pesquisa de inteligência artificial.
 
 ---
 
 ## Estrutura do JSON
 
-### 0. `titulo`
+### 0. `title`
 - **Objetivo:** Definir um título claro e representativo para todo o conteúdo da aula.
 - **Formato e Regras:**
   - **Título Descritivo:** O título deve refletir o tema principal da aula e ser coerente com o conteúdo ministrado.
@@ -63,7 +67,7 @@ não é necessário reforçar isso aqui no prompt. Estrutura de referência:
 
 ---
 
-### 1. `resumo`
+### 1. `summary`
 - **Objetivo:** Fornecer um resumo detalhado e estruturado do conteúdo principal da aula.
 - **Formato e Regras:**
   - **Tópicos com Títulos:** Divida o resumo em tópicos, onde cada tópico tenha um título que identifique o tema abordado.
@@ -77,34 +81,35 @@ não é necessário reforçar isso aqui no prompt. Estrutura de referência:
 
 ---
 
-### 2. `tarefas_futuras`
+### 2. `future_tasks`
 - **Objetivo:** Listar todas as tarefas e atividades futuras mencionadas na aula.
 - **Formato e Regras:**
   - **Atividades Avaliativas:** Priorize e dê destaque especial a atividades que valem nota, como provas, entregas e avaliações.
-  - **Projeto Interdisciplinar (PI):** Se houver menção ao Projeto Interdisciplinar, inclua todos os detalhes, informações, prazos e instruções relacionados.
+  - **Projeto Interdisciplinar (PI):** Se houver menção ao Projeto Interdisciplinar, inclua todos os detalhes, informações, prazos e instruções relacionados em `overview` e nos `items`.
   - **Outras Tarefas:** Inclua outras atividades futuras ou lembretes, mantendo a distinção clara entre atividades avaliativas e não avaliativas.
-  - **Data de Entrega:** Sempre informe em **negrito** a data de entrega da tarefa ao final da descrição. Caso a data não seja informada, utilize **"A Definir"**.
-
+  - **Data de Entrega (`due_date_iso` e `due_date_original_text`):** Cada item de `items` tem dois campos de data, não um texto formatado:
+    - `due_date_original_text`: o que foi literalmente dito em aula sobre o prazo (ex.: "semana que vem", "antes da prova final"). Use "Não mencionado" se não houver menção nenhuma.
+    - `due_date_iso`: a mesma data resolvida para o formato `YYYY-MM-DD`, usando a data de referência informada mais abaixo para resolver expressões relativas. Use `null` quando não for possível determinar uma data de calendário real — **não invente uma data só para preencher o campo**.
 
 ---
 
-### 3. `datas_futuras`
+### 3. `mentioned_dates`
 - **Objetivo:** Registrar todas as menções a datas e eventos futuros citados durante a aula.
 - **Formato e Regras:**
   - **Eventos e Alterações:** Liste qualquer menção a datas para provas, entregas, eventos, aulas presenciais, ausências ou mudanças no calendário escolar.
-  - **Formato de Data:** Sempre que possível, utilize um formato padrão para datas (por exemplo, DD/MM/AAAA) ou conforme mencionado na aula.
-  - **Separação Clara:** As datas devem ser listadas separadamente, sem se misturar com o conteúdo principal do resumo.
+  - **Datas Estruturadas:** Cada item tem `original_text` (o que foi dito) e `date_iso` (a data resolvida em `YYYY-MM-DD`, ou `null` se não for possível determinar) — mesma regra de `future_tasks` acima.
+  - **Separação Clara:** As datas devem ser listadas separadamente, sem se misturar com o conteúdo principal do `summary`.
 
 ---
 
-### 4. `discussoes_off_topic`
+### 4. `off_topic`
 - **Objetivo:** Capturar informações e comentários que não estejam diretamente relacionados ao conteúdo central da aula.
 - **Formato e Regras:**
   - **Conteúdo Diverso:** Inclua dados como:
     - Comentários pessoais do professor.
     - Informações sobre acontecimentos paralelos (ex.: a aula foi interrompida, menções a assuntos não relacionados).
     - Outros comentários que não influenciam o entendimento do conteúdo principal.
-  - **Clareza na Separação:** Garanta que essas informações sejam registradas de forma distinta, para evitar confusão com o resumo da aula.
+  - **Clareza na Separação:** Garanta que essas informações sejam registradas de forma distinta, para evitar confusão com o `summary`.
 
 ---
 
@@ -117,7 +122,7 @@ não é necessário reforçar isso aqui no prompt. Estrutura de referência:
 
 ---
 
-### 6. `atividades_em_aula`
+### 6. `class_activities`
 - **Objetivo:** Fornecer um resumo específico e focado das atividades práticas realizadas durante a aula.
 - **Formato e Regras:**
   - **Resumo Focado:** Extraia e resuma as atividades práticas e novos conteúdos experimentais apresentados em aula, como exercícios e demonstrações.
@@ -126,13 +131,13 @@ não é necessário reforçar isso aqui no prompt. Estrutura de referência:
     - Demonstrações práticas (ex.: criação de consultas SQL, uso de ferramentas, experimentos em código).
     - Instruções práticas dadas pelo professor.
   - **Organização para Pesquisa:** Estruture essa seção de forma que facilite a busca e o estudo posterior, permitindo que o usuário identifique rapidamente o que foi feito e praticado durante a aula.
-  - **Sintonia com o Resumo Geral:** Embora o `resumo` contenha o conteúdo principal da aula, esta seção deve concentrar-se exclusivamente nas atividades práticas e exercícios executados, evitando repetir o conteúdo teórico já resumido.
+  - **Sintonia com o Resumo Geral:** Embora o `summary` contenha o conteúdo principal da aula, esta seção deve concentrar-se exclusivamente nas atividades práticas e exercícios executados, evitando repetir o conteúdo teórico já resumido.
 
 ---
 
 ## Regras Adicionais
 
-- **Não Duplicar Informações:** O conteúdo do `resumo` deve se concentrar no principal da aula, enquanto as informações específicas de tarefas, datas, atividades práticas e discussões off-topic devem ser segregadas nos seus respectivos atributos.
+- **Não Duplicar Informações:** O conteúdo do `summary` deve se concentrar no principal da aula, enquanto as informações específicas de tarefas, datas, atividades práticas e discussões off-topic devem ser segregadas nos seus respectivos atributos.
 - **Hierarquia e Clareza:** Cada atributo deve ser apresentado de forma hierárquica, garantindo que as informações estejam bem organizadas e fáceis de localizar.
 - **Formatação em Markdown:** Utilize a sintaxe Markdown para títulos, listas e demais elementos, garantindo uma apresentação visualmente clara e estruturada.
 - **Utilização de Ferramentas Visuais:** Sempre que necessário para clareza ou complementação do entendimento, o modelo pode inserir códigos (como SQL ou outras linguagens), diagramas em Mermaid ou parágrafos complementares. Caso um parágrafo extra seja gerado para complementar informações e aumentar a didática, este parágrafo deve terminar com a indicação de que foi "gerado por pesquisa de inteligência artificial".

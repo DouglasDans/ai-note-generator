@@ -5,12 +5,13 @@ import {
   createUserContent,
   type ContentListUnion,
 } from "@google/genai";
-import type { Disciplinas } from "@/types/JsonResponse";
-import { AULA_RESPONSE_SCHEMA } from "./schema.ts";
+import { COURSE_EXTRACTION_RESPONSE_SCHEMA } from "./schema.ts";
 import { buildSystemInstruction } from "./prompt.ts";
-import { parseAulaSummaryResponse } from "./parseAulaSummaryResponse.ts";
+import { parseCourseExtractionResponse } from "./parseCourseExtractionResponse.ts";
+import type { Course, CourseExtractionResult } from "./types.ts";
 
 const GEMINI_MODEL = "gemini-3.8-flash";
+const PROMPT_VERSION = "3.0";
 const PROMPT_TEMPLATE_PATH = path.join(process.cwd(), "src/prompts/prompt.md");
 
 /**
@@ -39,25 +40,25 @@ export interface GenAIClient {
   };
 }
 
-export interface GenerateAulaSummaryParams {
+export interface GenerateCourseExtractionParams {
   client: GenAIClient;
   audioFilePath: string;
   audioMimeType: string;
   recordingDate: string;
-  disciplinaNome?: string;
-  professorNome?: string;
+  courseName?: string;
+  professorName?: string;
 }
 
-export async function generateAulaSummary(
-  params: GenerateAulaSummaryParams
-): Promise<Disciplinas> {
+export async function generateCourseExtraction(
+  params: GenerateCourseExtractionParams
+): Promise<CourseExtractionResult> {
   const {
     client,
     audioFilePath,
     audioMimeType,
     recordingDate,
-    disciplinaNome,
-    professorNome,
+    courseName,
+    professorName,
   } = params;
 
   const promptTemplate = await readFile(PROMPT_TEMPLATE_PATH, "utf-8");
@@ -77,8 +78,8 @@ export async function generateAulaSummary(
   }
 
   const hintParts = [`A aula foi gravada em ${recordingDate}.`];
-  if (disciplinaNome) hintParts.push(`Disciplina informada: ${disciplinaNome}.`);
-  if (professorNome) hintParts.push(`Professor informado: ${professorNome}.`);
+  if (courseName) hintParts.push(`Disciplina informada: ${courseName}.`);
+  if (professorName) hintParts.push(`Professor informado: ${professorName}.`);
 
   const response = await client.models.generateContent({
     model: GEMINI_MODEL,
@@ -89,9 +90,20 @@ export async function generateAulaSummary(
     config: {
       systemInstruction,
       responseMimeType: "application/json",
-      responseSchema: AULA_RESPONSE_SCHEMA,
+      responseSchema: COURSE_EXTRACTION_RESPONSE_SCHEMA,
     },
   });
 
-  return parseAulaSummaryResponse(response.text);
+  const extraction = parseCourseExtractionResponse(response.text);
+
+  const courses: Course[] = extraction.courses.map((course) => ({
+    ...course,
+    sessions: course.sessions.map((session) => ({
+      ...session,
+      recording_date: recordingDate,
+      prompt_version: PROMPT_VERSION,
+    })),
+  }));
+
+  return { full_transcript: extraction.full_transcript, courses };
 }

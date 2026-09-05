@@ -3,7 +3,7 @@
 > Documento de trabalho. Registra as decisões tomadas, o motivo delas e a ordem
 > de execução. Atualizar a cada fase concluída.
 >
-> Última atualização: 05/09/2026 · Fase 0 concluída · repo unificado na raiz
+> Última atualização: 05/09/2026 · Fases 0, 1 e 2 concluídas
 
 ---
 
@@ -307,25 +307,66 @@ da verificação manual acima. Substitui o `main.py`, que já havia sido removid
 na unificação do repo (commit `b8ef507`) — entre aquele commit e este, não
 havia caminho de ingestão nenhum.
 
-### Fase 2 — Schema novo
+### Fase 2 — Schema novo ✅ CONCLUÍDA
 
-- Datas ISO normalizadas + campo com o texto original
-- Campo de data de entrega em `tarefas_futuras` (sai do negrito na descrição)
-- Renomear para `space` / `course` / `session`
-- `prompt.md` parametrizado (instituição, data, contexto) — sai o "FATEC 2025"
-- Decidir se a transcrição vira campo do JSON (ver 4.3)
+- **Datas estruturadas:** `mentioned_dates[]` e `future_tasks.items[]` ganharam
+  `*_iso: string | null` + `*_original_text: string`, substituindo string livre
+  e a convenção de negrito no fim da descrição
+- **Renomeado agora** (não adiado pra Fase 3, por decisão explícita — troca-se
+  o risco de renomear duas vezes pelo de um diff maior de uma vez): schema e
+  tipos do pipeline de IA em inglês neutro — `disciplinas→courses`,
+  `aulas→sessions`, `nome→name`, `titulo→title`, `resumo→summary`,
+  `tarefas_futuras→future_tasks`, `datas_futuras_mencionadas→mentioned_dates`,
+  `atividades_em_aula→class_activities`. `professor` não mudou — já é palavra
+  válida em inglês
+- **`full_transcript`** adicionado no nível raiz da resposta (não por sessão —
+  uma gravação gera uma transcrição só, mesmo com múltiplas sessions
+  derivadas). Continua uma chamada só ao Gemini, não virou pipeline de duas
+  etapas — decisão 4.3 mantida
+- **`aula.data` removido do que se pede à IA.** Já sabíamos essa data
+  (`recordingDate`, parâmetro de quem chama) — pedir pro modelo também
+  produzir era duplicação e uma chance de a IA alucinar uma data que já
+  tínhamos com certeza. `recording_date` e `prompt_version` (bump 2.6 → 3.0)
+  agora são injetados no `Session` depois do parse, não pedidos ao modelo
+- `prompt.md` reescrito por completo: prosa continua em português (idioma do
+  conteúdo/aluno), só as chaves do JSON viraram inglês — senão o prompt
+  ficaria descrevendo `resumo` enquanto o schema pede `summary`
+- Renomeadas as duas funções centrais do pipeline para bater com os tipos
+  novos: `generateAulaSummary`→`generateCourseExtraction`,
+  `parseAulaSummaryResponse`→`parseCourseExtractionResponse` (arquivos e
+  testes movidos junto)
 
-**DoD:** schema versionado, testes de normalização de data cobrindo expressões
-relativas ("daqui a duas semanas", "semana que vem", data absoluta, data ausente).
+**Deliberadamente fora desta fase:** `JsonResponse.ts`, `collectionTypes.ts`,
+`firebase.service.ts` e os componentes de UI **não foram tocados** — eles
+descrevem o formato que já está gravado no Firestore hoje, sem migração
+nenhuma ainda. Renomear esses tipos agora faria o código mentir sobre o dado
+real. Isso é trabalho da Fase 3, quando a persistência for reconstruída sobre
+Postgres.
+
+**Correção ao DoD original:** a redação antiga pedia "testes de normalização
+de data cobrindo expressões relativas" — impreciso, porque quem resolve
+"daqui a duas semanas" é o **modelo** (usando a âncora temporal da Fase 1), não
+código nosso. O que testamos do nosso lado é o validador aceitando ISO válido
+(`YYYY-MM-DD`) ou `null`, e rejeitando formato errado (`parseCourseExtraction
+Response.test.ts`).
+
+**DoD (revisado):** schema e tipos sincronizados entre `schema.ts` e
+`types.ts`; validador rejeita data fora do padrão ISO; testes cobrem data
+válida, `null`, e formato inválido. `tsc`, Vitest, lint e `next build`
+passando. Verificação manual contra a API real ainda pendente (mesma ressalva
+da Fase 1 — ver `npm run try:ai`).
 
 ### Fase 3 — Persistência
 
 - Postgres no Railway
-- Modelo: `space` → `course` → `session`
+- Modelo: `space` → `course` → `session` (o `space` é conceito novo, só de
+  persistência/rota — não existe no output da IA)
+- Renomear `JsonResponse.ts`, `collectionTypes.ts`, `firebase.service.ts` e os
+  componentes de UI para os nomes já adotados no pipeline de IA na Fase 2
 - Rotas `/[space]/...` + lista de palavras reservadas
 - Home deixa de listar qualquer coisa
 - Script de migração dos dados atuais do Firestore
-- Remoção do `firebase` do `ui-client`
+- Remoção do `firebase` do projeto
 
 **DoD:** dados atuais migrados e visíveis nas rotas novas; nenhuma rota enumera
 spaces.

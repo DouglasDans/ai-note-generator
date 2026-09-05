@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { generateAulaSummary, type GenAIClient } from "./generateAulaSummary";
-import { AULA_RESPONSE_SCHEMA } from "./schema";
+import {
+  generateCourseExtraction,
+  type GenAIClient,
+} from "./generateCourseExtraction.ts";
+import { COURSE_EXTRACTION_RESPONSE_SCHEMA } from "./schema.ts";
 
 function fakeClient(overrides?: {
   text?: string;
@@ -12,7 +15,7 @@ function fakeClient(overrides?: {
     mimeType: overrides?.mimeType ?? "audio/mp3",
   });
   const generateContent = vi.fn().mockResolvedValue({
-    text: overrides?.text ?? JSON.stringify({ disciplinas: [] }),
+    text: overrides?.text ?? JSON.stringify({ full_transcript: "", courses: [] }),
   });
 
   const client: GenAIClient = {
@@ -23,21 +26,38 @@ function fakeClient(overrides?: {
   return { client, upload, generateContent };
 }
 
-describe("generateAulaSummary", () => {
-  it("uploads the audio, calls generateContent with the schema and the interpolated prompt, and returns the parsed result", async () => {
+describe("generateCourseExtraction", () => {
+  it("uploads the audio, calls generateContent with the schema and the interpolated prompt, and injects recording_date/prompt_version into every session", async () => {
     const { client, upload, generateContent } = fakeClient({
       text: JSON.stringify({
-        disciplinas: [{ nome: "Ética", professor: "Andreza", aulas: [] }],
+        full_transcript: "Transcrição completa.",
+        courses: [
+          {
+            name: "Ética",
+            professor: "Andreza",
+            sessions: [
+              {
+                title: "Aula 1",
+                summary: "Resumo",
+                off_topic: "",
+                future_tasks: { overview: "", items: [] },
+                mentioned_dates: [],
+                class_activities: "",
+                tags: [],
+              },
+            ],
+          },
+        ],
       }),
     });
 
-    const result = await generateAulaSummary({
+    const result = await generateCourseExtraction({
       client,
       audioFilePath: "/tmp/aula.mp3",
       audioMimeType: "audio/mp3",
       recordingDate: "2026-03-10",
-      disciplinaNome: "Ética",
-      professorNome: "Andreza",
+      courseName: "Ética",
+      professorName: "Andreza",
     });
 
     expect(upload).toHaveBeenCalledWith({
@@ -49,11 +69,14 @@ describe("generateAulaSummary", () => {
     const call = generateContent.mock.calls[0][0];
     expect(call.model).toBe("gemini-3.8-flash");
     expect(call.config.responseMimeType).toBe("application/json");
-    expect(call.config.responseSchema).toBe(AULA_RESPONSE_SCHEMA);
+    expect(call.config.responseSchema).toBe(COURSE_EXTRACTION_RESPONSE_SCHEMA);
     expect(call.config.systemInstruction).toContain("2026-03-10");
     expect(call.config.systemInstruction).not.toContain("{{DATA_REFERENCIA}}");
 
-    expect(result.disciplinas[0].nome).toBe("Ética");
+    const session = result.courses[0].sessions[0];
+    expect(session.recording_date).toBe("2026-03-10");
+    expect(session.prompt_version).toBe("3.0");
+    expect(result.full_transcript).toBe("Transcrição completa.");
   });
 
   it("throws when the upload response is missing uri or mimeType", async () => {
@@ -63,7 +86,7 @@ describe("generateAulaSummary", () => {
       .mockResolvedValue({ uri: undefined, mimeType: undefined });
 
     await expect(
-      generateAulaSummary({
+      generateCourseExtraction({
         client,
         audioFilePath: "/tmp/aula.mp3",
         audioMimeType: "audio/mp3",
@@ -76,7 +99,7 @@ describe("generateAulaSummary", () => {
     const { client } = fakeClient({ text: "não é json" });
 
     await expect(
-      generateAulaSummary({
+      generateCourseExtraction({
         client,
         audioFilePath: "/tmp/aula.mp3",
         audioMimeType: "audio/mp3",
