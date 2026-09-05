@@ -1,10 +1,9 @@
 # ✨ AI Note Generator
 
-**Gere resumos estruturados das suas aulas a partir dos audios gravados utilizando IA**
+**Gere resumos estruturados das suas aulas a partir dos áudios gravados utilizando IA**
 
-**Um assistente de IA para transcrição de áudio, geração e estruturação de texto em Markdown.**
-
-O **AI Note Generator** tem como objetivo armazenar e organizar registros detalhados das aulas da faculdade. Com isso, facilita o acesso à informação passada em aula, aprimorando os estudos e a produtividade.
+O **AI Note Generator** armazena e organiza registros detalhados de aulas. Com isso,
+facilita o acesso à informação passada em aula, aprimorando os estudos e a produtividade.
 
 ## 🚀 Funcionalidades
 
@@ -14,82 +13,55 @@ O **AI Note Generator** tem como objetivo armazenar e organizar registros detalh
 - 🧑‍💻 **Resumo de Atividades Práticas** – Documenta exercícios e práticas realizadas.
 - 📎 **Geração de Tags** – Destaca pontos-chave, facilitando pesquisas futuras.
 
-
-
 ## 🛠 Tecnologias Utilizadas
 
-- **Google Gemini API** – Para transcrição e geração dos dados.
-- **Firebase** – Armazena e gerencia os registros de aula.
-- **Python** – Responsável pelo processamento dos áudios e envio para a IA.
-- **Next.js** – Interface gráfica para consulta e organização dos dados.
+- **Next.js 15** (App Router) — interface e backend
+- **React 19**
+- **Google Gemini API** — transcrição e geração dos dados
+- **Firebase / Firestore** — armazenamento dos registros de aula
+- **Vitest** — testes
 
+## 🚧 Em reestruturação
 
-## 🏗 Como Configurar e Rodar o Projeto
+O projeto está passando por uma reestruturação. O script Python que fazia a
+ingestão de áudio foi removido e está sendo reescrito como backend do próprio
+Next.js, para que o upload seja feito pelo navegador em vez de linha de comando.
 
-### 🔧 1. Configuração das Variáveis de Ambiente
+**No momento não há caminho de ingestão funcional** — a interface de leitura
+continua operante sobre os dados já existentes.
 
-1. Crie um arquivo `.env` nas pastas `transcription-script` e `ui-client` baseado nos seus respectivos `env.example`.
+Decisões, fases e estado atual: **[PLANO.md](PLANO.md)**.
 
+## 🏗 Como Rodar o Projeto
 
+### 1. Variáveis de ambiente
 
-### 🐍 2. Preparar o Ambiente Python
+Crie um arquivo `.env` na raiz baseado no `.env.example`.
 
-1. Certifique-se de ter o **Python 3.8+** instalado.
-2. Navegue até a pasta `transcription-script` e crie um ambiente virtual:
-   ```bash
-   python -m venv venv
-   ```
-3. Ative o ambiente virtual:
-   - **Linux/macOS:**
-     ```bash
-     source venv/bin/activate
-     ```
-   - **Windows:**
-     ```bash
-     venv\Scripts\activate
-     ```
-4. Instale as dependências:
-   ```bash
-   pip install -r requirements.txt
-   ```
+### 2. Instalar dependências
 
-
-
-### 📂 3. Preparar os Arquivos Necessários
-
-1. Coloque o arquivo de áudio com o nome `file.mp3` na pasta `transcription-script`.
-2. Edite `prompt.md` na mesma pasta para personalizar as instruções para a IA caso veja necessidade.
-
-
-
-### ▶ 4. Executar o Script de Transcrição
-
-Na pasta `transcription-script`, execute:
 ```bash
-python main.py
+npm install
 ```
 
+### 3. Rodar em desenvolvimento
 
-### 🖥 5. Executar o Frontend
+```bash
+npm run dev
+```
 
-1. Navegue até a pasta `ui-client`:
-   ```bash
-   cd ui-client
-   ```
-2. Instale as dependências:
-   ```bash
-   npm install
-   ```
-3. Inicie o servidor de desenvolvimento:
-   ```bash
-   npm run dev
-   ```
-4. Acesse o frontend em: [http://localhost:3000](http://localhost:3000).
+Acesse [http://localhost:3000](http://localhost:3000).
 
+### Outros comandos
+
+```bash
+npm test         # roda os testes
+npm run test:watch
+npm run lint
+npm run build
+```
 
 ## 📌 Contribuição
 
-Sinta-se à vontade para contribuir com o projeto! Faça um fork, crie uma branch para suas alterações e envie um pull request.
-
-
-
+Sinta-se à vontade para contribuir com o projeto! Faça um fork, crie uma branch
+para suas alterações e envie um pull request.

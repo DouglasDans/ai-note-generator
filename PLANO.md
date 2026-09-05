@@ -3,7 +3,7 @@
 > Documento de trabalho. Registra as decisões tomadas, o motivo delas e a ordem
 > de execução. Atualizar a cada fase concluída.
 >
-> Última atualização: 05/09/2026 · Fase 0 concluída
+> Última atualização: 05/09/2026 · Fase 0 concluída · repo unificado na raiz
 
 ---
 
@@ -31,7 +31,7 @@ fases existem para viabilizar isso.
 
 ## 2. Estado atual (auditado em 04/09/2026)
 
-### `ui-client/` — Next.js
+### Aplicação Next.js — raiz do repositório
 
 | Item | Valor |
 | --- | --- |
@@ -41,21 +41,32 @@ fases existem para viabilizar isso.
 | Dados | `firebase` 11.6.0 (Firestore), acesso via `"use server"` |
 | Gerenciador | **npm** (não yarn) |
 | Testes | Vitest (adicionado na Fase 0) |
-| Deploy | Vercel — <https://starlight-project-theta.vercel.app/> |
+| Deploy atual | Vercel — <https://starlight-project-theta.vercel.app/> |
+| Deploy alvo | **Railway** (confirmado) |
 
 Rotas: `/` (lista todas as disciplinas), `/[disciplina]`, `/[disciplina]/[aula]`.
 
 Acesso ao Firestore concentrado em `src/services/firebase.service.ts`
 (3 funções, ~60 linhas) e `src/config/firebase.config.ts`.
 
-### `transcription-script/` — Python
+### `transcription-script/` — Python · ❌ REMOVIDO
 
-CLI local. Lê `./file.mp3` e `./prompt.md`, pede disciplina/professor/data no
-terminal, chama o Gemini, extrai o JSON da resposta **com regex**
-(`extrair_json()`) e grava no Firestore via service account (`./firebase.json`).
+Deletado em 05/09/2026 junto com a unificação do repo. Descrição mantida como
+referência para o port da Fase 1 — o código continua recuperável no histórico
+do git.
+
+Era um CLI local: lia `./file.mp3` e `./prompt.md`, pedia disciplina/professor/data
+no terminal, chamava o Gemini, extraía o JSON da resposta **com regex**
+(`extrair_json()`) e gravava no Firestore via service account (`./firebase.json`).
 
 - `prompt_version` atual: **2.6**
 - Modelo: `gemini-2.5-pro-exp-03-25`
+
+O `prompt.md` **não foi deletado** — é o ativo real do projeto e foi movido para
+`src/prompts/prompt.md`, onde o pipeline TS vai consumi-lo.
+
+> ⚠️ Com a remoção, **não existe caminho de ingestão funcional** até a Fase 1
+> entregar o pipeline. A leitura dos dados já existentes segue operante.
 
 ### Modelo de dados no Firestore
 
@@ -172,6 +183,21 @@ sai de uma lib em beta permanente e ganha tema pronto e responsivo.
 ficar mais claro. Evitar "campus" ou "disciplina", que prendem o produto a
 faculdade.
 
+### 4.7 Repo unificado + backend no próprio Next.js, hospedado no Railway
+
+Uma aplicação só, na raiz do repositório. O backend são route handlers do
+Next.js — sem serviço separado. Deploy no **Railway** (confirmado em 05/09/2026).
+
+**Motivo do host:** essa unificação **só fecha a conta fora da Vercel**. Route
+handler na Vercel tem teto de 4.5 MB de body e áudio de aula tem 50–150 MB — não
+tem workaround sem storage externo, que traria de volta o problema do plano Blaze.
+Em container no Railway (`next start`) o limite é o que a aplicação definir.
+
+**Feito em 05/09/2026:** `ui-client/*` movido para a raiz e `transcription-script/`
+deletado. Os dois `.gitignore` foram mesclados manualmente — o do `ui-client` tinha
+a seção de env vazia, e uma substituição simples teria feito `.env` deixar de ser
+ignorado.
+
 ---
 
 ## 5. Arquitetura alvo
@@ -265,13 +291,13 @@ spaces.
 
 ### Fase 4 — Upload pela web
 
-- Backend HTTP no Railway recebendo o arquivo
+- Route handler do Next.js recebendo o arquivo
 - Tela de upload
 - Processamento assíncrono com status (áudio longo pode passar de minutos)
+- Deploy no Railway
 
 **DoD:** a Giovanna sobe um áudio pelo navegador e vê a aula registrada, sem
-Python, sem terminal, sem credencial no disco. **`transcription-script/` é
-deletado aqui.**
+Python, sem terminal, sem credencial no disco.
 
 ### Fase 5 — Interface
 
@@ -298,9 +324,10 @@ mostrando próximas provas ordenadas.
 
 ## 8. Pontos em aberto
 
-1. **Confirmar Railway** como host (referido como "Highway" na conversa). Toda a
-   Fase 3 e 4 dependem disso.
-2. Lista definitiva de palavras reservadas para paths de space.
-3. Transcrição como campo do JSON — decidir na Fase 2.
-4. Modelo Gemini definitivo — confirmar na lista viva da API no momento da
+1. Lista definitiva de palavras reservadas para paths de space.
+2. Transcrição como campo do JSON — decidir na Fase 2.
+3. Modelo Gemini definitivo — confirmar na lista viva da API no momento da
    Fase 1.
+4. Migrar o deploy da Vercel para o Railway — em que fase fazer o corte.
+
+> Resolvido: host confirmado como Railway (05/09/2026).
