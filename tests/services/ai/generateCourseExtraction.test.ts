@@ -53,7 +53,7 @@ describe("generateCourseExtraction", () => {
 
     const result = await generateCourseExtraction({
       client,
-      audioFilePath: "/tmp/aula.mp3",
+      audioSource: "/tmp/aula.mp3",
       audioMimeType: "audio/mp3",
       recordingDate: "2026-03-10",
       courseName: "Ética",
@@ -79,6 +79,25 @@ describe("generateCourseExtraction", () => {
     expect(result.full_transcript).toBe("Transcrição completa.");
   });
 
+  it("accepts a Blob as the audio source, for web uploads with no temp file", async () => {
+    const { client, upload } = fakeClient({
+      text: JSON.stringify({ full_transcript: "", courses: [] }),
+    });
+    const blob = new Blob(["fake audio bytes"], { type: "audio/mp3" });
+
+    await generateCourseExtraction({
+      client,
+      audioSource: blob,
+      audioMimeType: "audio/mp3",
+      recordingDate: "2026-03-10",
+    });
+
+    expect(upload).toHaveBeenCalledWith({
+      file: blob,
+      config: { mimeType: "audio/mp3" },
+    });
+  });
+
   it("throws when the upload response is missing uri or mimeType", async () => {
     const { client } = fakeClient();
     client.files.upload = vi
@@ -88,7 +107,7 @@ describe("generateCourseExtraction", () => {
     await expect(
       generateCourseExtraction({
         client,
-        audioFilePath: "/tmp/aula.mp3",
+        audioSource: "/tmp/aula.mp3",
         audioMimeType: "audio/mp3",
         recordingDate: "2026-03-10",
       })
@@ -101,7 +120,7 @@ describe("generateCourseExtraction", () => {
     await expect(
       generateCourseExtraction({
         client,
-        audioFilePath: "/tmp/aula.mp3",
+        audioSource: "/tmp/aula.mp3",
         audioMimeType: "audio/mp3",
         recordingDate: "2026-03-10",
       })

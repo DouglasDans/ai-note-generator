@@ -28,7 +28,7 @@ async function main() {
   console.log("Gerando extração da aula...");
   const result = await generateCourseExtraction({
     client,
-    audioFilePath,
+    audioSource: audioFilePath,
     audioMimeType,
     recordingDate,
   });

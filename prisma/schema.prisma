@@ -19,7 +19,8 @@ model Space {
   writeSecret String   @unique @map("write_secret")
   createdAt   DateTime @default(now()) @map("created_at")
 
-  courses Course[]
+  courses       Course[]
+  ingestionJobs IngestionJob[]
 
   @@map("spaces")
 }
@@ -88,6 +89,32 @@ model TaskItem {
   session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@map("task_items")
+}
+
+enum IngestionJobStatus {
+  pending
+  processing
+  done
+  error
+}
+
+// Acompanha um upload de áudio em processamento (Fase 4). Não referencia
+// Course/Session diretamente — uma extração pode gerar mais de uma sessão
+// (schema permite múltiplos courses/sessions por gravação), então "onde
+// redirecionar quando terminar" é sempre a página do space, não uma sessão
+// específica.
+model IngestionJob {
+  id           String             @id @default(cuid())
+  spaceId      String             @map("space_id")
+  status       IngestionJobStatus @default(pending)
+  errorMessage String?            @map("error_message")
+
+  space Space @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("ingestion_jobs")
 }
 
 model MentionedDate {

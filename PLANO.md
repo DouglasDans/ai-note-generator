@@ -3,7 +3,8 @@
 > Documento de trabalho. Registra as decisões tomadas, o motivo delas e a ordem
 > de execução. Atualizar a cada fase concluída.
 >
-> Última atualização: 06/09/2026 · Fases 0, 1, 2 e 3 (3a, 3b, 3c) concluídas
+> Última atualização: 06/09/2026 · Fases 0, 1, 2 e 3 (3a, 3b, 3c) concluídas ·
+> Fase 4a concluída
 
 ---
 
@@ -507,10 +508,59 @@ space existente, criar um novo, rejeitar slug reservado).
 
 ### Fase 4 — Upload pela web
 
-- Route handler do Next.js recebendo o arquivo
-- Tela de upload
-- Processamento assíncrono com status (áudio longo pode passar de minutos)
-- Deploy no Railway
+Decomposta como a Fase 3, mesmo padrão de gates.
+
+**Decisões tomadas (05/09/2026):**
+- **Sem writeSecret ainda** para autorizar upload — mesma postura de "sem
+  login" das outras decisões (4.1). Qualquer um com o link do space pode
+  subir áudio nele. Revisar se um dia virar problema real.
+- **Status em tabela do Postgres** (`IngestionJob`), não em memória —
+  sobrevive a restart do container no meio de um processamento longo.
+- **DoD fecha local** (Docker), sem exigir Railway de produção — mesmo
+  padrão da Fase 3. O corte de deploy real é item separado (ver §8).
+- **Route Handler, não Server Action**, para o upload: Server Actions têm
+  limite de body de **1MB por padrão** (configurável, mas bufferizam o
+  corpo inteiro antes de processar) — inadequado para áudio de 50-150MB.
+  Confirmado na doc oficial do Next.js, não chutado.
+
+- **4a — Route Handler + processamento assíncrono ✅ CONCLUÍDA:**
+  - `IngestionJob` (schema novo: `id`, `spaceId`, `status` — enum `pending`/
+    `processing`/`done`/`error` —, `errorMessage`). Não referencia
+    Course/Session: uma extração pode gerar mais de uma sessão, então "pra
+    onde redirecionar quando terminar" é sempre a página do space, não uma
+    sessão específica.
+  - **Achado que eliminou a necessidade de arquivo temporário:** o SDK do
+    Gemini aceita `file: string | Blob` no upload, e um `File` de
+    `FormData` **é** um `Blob`. `generateCourseExtraction` foi generalizado
+    (`audioFilePath: string` → `audioSource: string | Blob`) para aceitar
+    os dois — o script CLI da Fase 1 continua passando path, o route
+    handler passa o `File` direto do upload, sem nunca escrever em disco.
+  - `POST /api/[space]/ingest`: recebe `multipart/form-data`, cria o job,
+    dispara `processIngestionJob()` **sem aguardar** (fire-and-forget — só
+    funciona porque o processo é de longa duração no Railway, não
+    serverless; numa function serverless isso seria morto ao responder) e
+    devolve `{ jobId }` com 202 imediatamente.
+  - `GET /api/[space]/ingest/[jobId]`: consulta o status, escopado por
+    `spaceId` (mesmo padrão de não vazar entre spaces).
+  - `processIngestionJob` recebe o `GenAIClient` por parâmetro (mesma
+    injeção de dependência do `generateCourseExtraction`) em vez de
+    construir com `createGenAIClient()` internamente — mantém a função
+    testável sem mock de módulo, e força quem chama (o route handler) a
+    lidar com o erro **síncrono** que `createGenAIClient()` lança quando
+    falta `GEMINI_API_KEY`. Sem isso, essa falha vazaria pra fora do
+    try/catch do `processIngestionJob` e quebraria a resposta HTTP inteira
+    em vez de só marcar o job como `error` — mesmo tratamento de qualquer
+    outra falha do pipeline.
+  - Testes: `processIngestionJob` com integração real (Postgres local +
+    client fake), cobrindo sucesso e falha. Route handlers verificados na
+    mão via curl contra o dev server local (sem `GEMINI_API_KEY`
+    configurada aqui — confirma que o job termina em `error` de forma
+    limpa, sem travar a requisição) e os três caminhos de erro (space
+    inexistente, campo obrigatório faltando, job inexistente).
+- **4b — Tela de upload:** formulário dentro de `/[space]` + polling de
+  status até a sessão ficar pronta.
+- **4c — Deploy real no Railway:** `prisma migrate deploy` contra o banco
+  de produção (pendência já registrada em §8) + corte Vercel→Railway.
 
 **DoD:** a Giovanna sobe um áudio pelo navegador e vê a aula registrada, sem
 Python, sem terminal, sem credencial no disco.

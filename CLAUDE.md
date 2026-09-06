@@ -67,11 +67,14 @@ src/
     [space]/page.tsx                      # lista cursos do space
     [space]/[course]/page.tsx             # lista sessions do curso
     [space]/[course]/[session]/page.tsx   # detalhe da sessão
+    api/[space]/ingest/route.ts           # POST: recebe áudio, dispara
+                                           # processamento em background
+    api/[space]/ingest/[jobId]/route.ts   # GET: status do processamento
   components/              # componentes React (MUI Joy — a migrar)
   db/
     client.ts              # PrismaClient + adapter-pg, lê DATABASE_URL
-    *.repository.ts        # queries (space, course/session) — ver seção
-                            # "Camada de persistência"
+    *.repository.ts        # queries (space, course/session, ingestion job)
+                            # — ver seção "Camada de persistência"
     mapCourseExtractionToRows.ts  # CourseExtractionResult (IA) -> shape do Prisma
     generateUniqueSlug.ts  # slugifica + resolve colisão com sufixo numérico
     slug.ts, secret.ts     # validação de slug de space e geração de writeSecret
@@ -79,6 +82,9 @@ src/
   services/
     ai/                    # pipeline de ingestão (Gemini) — TypeScript puro,
                             # sem HTTP, sem banco. Ver seção "Pipeline de IA".
+    processIngestionJob.ts # orquestra ai/ + db/: extrai, persiste, atualiza
+                            # o status do job. Roda em background — ver
+                            # nota no route handler de POST /api/[space]/ingest
   prompts/
     prompt.md              # o prompt do Gemini — ativo central do projeto,
                             # versionado via "prompt_version" nos dados salvos
@@ -122,6 +128,30 @@ validação da resposta (`parseCourseExtractionResponse.ts`) →
 - `TaskItem`/`MentionedDate` são tabelas próprias, não JSONB, para permitir
   `ORDER BY due_date_iso` direto no banco ao cruzar tarefas de várias
   `Session`s no dashboard futuro.
+- `IngestionJob` não referencia `Course`/`Session` — uma extração pode gerar
+  mais de uma sessão, então não existe "a" sessão resultante de um job pra
+  apontar. Quando o job termina, quem chama volta pra página do space
+  inteiro, não pra uma sessão específica.
+
+## Upload de áudio (`src/app/api/[space]/ingest/`)
+
+- **Route Handler, não Server Action** — Server Actions têm limite de body
+  de 1MB por padrão e bufferizam o corpo inteiro antes de processar;
+  inadequado para áudio de 50-150MB.
+- **Sem arquivo temporário**: o SDK do Gemini aceita `Blob` direto no
+  upload, e um `File` de `FormData` é um `Blob`. `audioSource` em
+  `generateCourseExtraction` aceita `string | Blob` por isso — o script CLI
+  passa path, o route handler passa o `File` do upload sem nunca escrever
+  em disco.
+- **Fire-and-forget**: o `POST` cria o `IngestionJob`, dispara
+  `processIngestionJob()` sem `await`, e responde 202 na hora. Só funciona
+  porque o processo é de longa duração no Railway — numa function
+  serverless isso seria morto assim que a resposta fosse enviada.
+- `createGenAIClient()` lança de forma **síncrona** se faltar
+  `GEMINI_API_KEY`. Isso é tratado no próprio route handler (não dentro do
+  `processIngestionJob`), porque senão essa falha específica quebraria a
+  resposta HTTP inteira em vez de só marcar o job como `error` — mesmo
+  tratamento de qualquer outra falha do pipeline.
 
 ## Convenção de import: `.ts` explícito em `src/services/ai/`
 

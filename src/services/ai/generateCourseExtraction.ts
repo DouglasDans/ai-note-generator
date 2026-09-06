@@ -23,7 +23,7 @@ const PROMPT_TEMPLATE_PATH = path.join(process.cwd(), "src/prompts/prompt.md");
 export interface GenAIClient {
   files: {
     upload(params: {
-      file: string;
+      file: string | Blob;
       config?: { mimeType?: string };
     }): Promise<{ uri?: string; mimeType?: string }>;
   };
@@ -42,7 +42,9 @@ export interface GenAIClient {
 
 export interface GenerateCourseExtractionParams {
   client: GenAIClient;
-  audioFilePath: string;
+  /** Caminho de arquivo (uso via CLI/scripts) ou Blob/File (upload web —
+   * um File de FormData já é um Blob, sem precisar escrever em disco). */
+  audioSource: string | Blob;
   audioMimeType: string;
   recordingDate: string;
   courseName?: string;
@@ -54,7 +56,7 @@ export async function generateCourseExtraction(
 ): Promise<CourseExtractionResult> {
   const {
     client,
-    audioFilePath,
+    audioSource,
     audioMimeType,
     recordingDate,
     courseName,
@@ -67,7 +69,7 @@ export async function generateCourseExtraction(
   });
 
   const uploadedFile = await client.files.upload({
-    file: audioFilePath,
+    file: audioSource,
     config: { mimeType: audioMimeType },
   });
 
