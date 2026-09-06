@@ -67,6 +67,10 @@ src/
   config/                  # config do Firebase
   db/
     client.ts              # PrismaClient + adapter-pg, lê DATABASE_URL
+    *.repository.ts        # queries (space, course/session) — ver seção
+                            # "Camada de persistência"
+    mapCourseExtractionToRows.ts  # CourseExtractionResult (IA) -> shape do Prisma
+    slug.ts, secret.ts     # validação de slug de space e geração de writeSecret
   generated/prisma/        # client gerado (gitignored, não editar à mão)
   services/
     ai/                    # pipeline de ingestão (Gemini) — TypeScript puro,
@@ -110,6 +114,19 @@ validação da resposta (`parseCourseExtractionResponse.ts`) →
   validação, wiring da chamada) — não a chamada real ao Gemini nem a
   qualidade do resumo, que é subjetiva.
 
+## Camada de persistência (`src/db/`)
+
+- `space.repository.ts` / `course.repository.ts`: toda leitura de `Course`/
+  `Session` é escopada por `spaceId`/`courseId` (não busca só por `id`) —
+  quem só tem acesso a um space não pode puxar conteúdo de outro (modelo
+  Dontpad, decisão 4.1 do PLANO.md).
+- `mapCourseExtractionToRows.ts` é a ponte entre o que a IA produz
+  (`src/services/ai/types.ts`) e o que o Postgres grava — função pura, sem
+  Prisma importado, para ser testável sem banco.
+- `TaskItem`/`MentionedDate` são tabelas próprias, não JSONB, para permitir
+  `ORDER BY due_date_iso` direto no banco ao cruzar tarefas de várias
+  `Session`s no dashboard futuro.
+
 ## Convenção de import: `.ts` explícito em `src/services/ai/`
 
 Os módulos dentro de `src/services/ai/` importam uns aos outros com extensão
@@ -130,3 +147,12 @@ do projeto.
 Colocados junto do código (`arquivo.test.ts` ao lado de `arquivo.ts`), não em
 pasta `__tests__/` separada. `vitest.config.mts` inclui `src/**/*.{test,spec}.
 {ts,tsx}`.
+
+Os testes de `src/db/*.repository.test.ts` são de **integração real** contra
+o Postgres local (precisa de `docker compose up -d` rodando) — diferente do
+pipeline de IA, uma query com campo errado falha de forma determinística, não
+há motivo para fake aqui. `vitest.config.mts` tem `fileParallelism: false`
+por causa disso: os arquivos de teste de banco compartilham o mesmo Postgres
+e fazem `beforeEach(() => prisma.space.deleteMany())` — em paralelo, um
+arquivo limpa a tabela no meio do teste de outro. Não reverter essa flag sem
+resolver o isolamento de outra forma (schema por worker, por exemplo).

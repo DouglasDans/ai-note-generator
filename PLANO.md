@@ -3,7 +3,7 @@
 > Documento de trabalho. Registra as decisões tomadas, o motivo delas e a ordem
 > de execução. Atualizar a cada fase concluída.
 >
-> Última atualização: 06/09/2026 · Fases 0, 1 e 2 concluídas · Fase 3a concluída
+> Última atualização: 06/09/2026 · Fases 0, 1 e 2 concluídas · Fase 3a e 3b concluídas
 
 ---
 
@@ -409,21 +409,52 @@ um dia fizer sentido.
     "prisma-client"`; wrapper de conexão em `src/db/client.ts` usando
     `@prisma/adapter-pg`. Confirmado com escrita/leitura/remoção reais contra
     o Postgres local antes de seguir.
-- **3b — Camada de persistência:** módulo de queries (equivalente ao
-  `firebase.service.ts`) + adaptador de `CourseExtractionResult` (Fase 2) pra
-  linhas do banco. Testes na lógica determinística (geração do secret de
-  escrita do space, validação de slug contra a lista de reservados).
+- **3b — Camada de persistência ✅ CONCLUÍDA:** `src/db/{reservedSlugs,slug,
+  secret,mapCourseExtractionToRows,space.repository,course.repository}.ts`.
+  - `slug.ts`: normaliza (trim + lowercase) e valida contra formato
+    (`^[a-z0-9]+(-[a-z0-9]+)*$`, 3–63 chars) e a lista de reservados de
+    `reservedSlugs.ts` — resolve o item #1 dos pontos em aberto.
+  - `secret.ts`: `writeSecret` via `crypto.randomBytes(32)` em base64url.
+  - `mapCourseExtractionToRows.ts`: função pura que converte
+    `CourseExtractionResult` (Fase 2) para o shape que o Prisma grava —
+    inclui parsear string `YYYY-MM-DD` para `Date` (interpretada como UTC
+    pelo próprio spec do JS para strings de data pura, sem ajuste manual de
+    timezone) e copiar `full_transcript` (raiz do resultado) para cada
+    `Session` gravada, já que o schema não tem entidade "recording" separada.
+  - `space.repository.ts` / `course.repository.ts`: `createSpace` (rejeita
+    slug inválido antes de tocar o banco; `SlugTakenError` em colisão via
+    `Prisma.PrismaClientKnownRequestError` código `P2002`),
+    `findSpaceBySlug`, `persistCourseExtraction` (transação — uma sessão
+    falhando não deixa curso gravado pela metade), `listCoursesBySpace`,
+    `getCourseWithSessions`/`getSessionById` (escopados por `spaceId`/
+    `courseId`, não só por `id`, para não vazar conteúdo entre spaces — ver
+    decisão 4.1).
+  - **Decisão de teste, diferente da Fase 1:** ali usei client fake porque a
+    saída da IA é subjetiva/não-determinística. Aqui não há esse motivo — uma
+    query Postgres com campo errado falha de forma determinística — então os
+    repositórios têm **testes de integração reais** contra o Postgres local
+    (Docker), não fakes. Só a lógica pura (slug, secret, mapper) ficou em
+    teste unitário sem banco.
+  - **Achado de configuração:** os testes de integração, rodando em paralelo
+    (padrão do Vitest), corrompiam uns aos outros — dois arquivos de teste
+    batendo no mesmo Postgres real, um limpando a tabela `space` no meio do
+    teste do outro (`beforeEach` com `deleteMany`). Corrigido com
+    `fileParallelism: false` no `vitest.config.mts`; aceitável no tamanho
+    atual da suíte (39 testes, ~3.7s).
 - **3c — Rotas:** `/`, `/[space]`, `/[space]/[course]`, `/[space]/[course]/
   [session]` passam a ler do Postgres. Home para de listar tudo. Ao final,
   `firebase.service.ts`, `collectionTypes.ts`, `firebase.config.ts` e o
   pacote `firebase` são removidos — uma vez que nada mais lê do Firestore,
   vira código morto.
+  - **Decisão em aberto para esta sub-fase:** `Course`/`Session` hoje só têm
+    `id` (cuid), sem slug legível — diferente do Firestore antigo, que usava
+    o nome sanitizado como ID do documento (e portanto como segmento de URL).
+    Decidir em 3c se as rotas usam o cuid cru (`/[space]/cmtp5xh.../...`) ou
+    se vale introduzir slug também para Course/Session (exigiria migração
+    nova no schema).
 
 **DoD:** as 3 sub-fases fechadas, `tsc`/testes/lint/build passando em cada
 gate, rotas novas funcionando sobre dados criados via Prisma (não migrados).
-
-**DoD:** dados atuais migrados e visíveis nas rotas novas; nenhuma rota enumera
-spaces.
 
 ### Fase 4 — Upload pela web
 
@@ -460,12 +491,11 @@ mostrando próximas provas ordenadas.
 
 ## 8. Pontos em aberto
 
-1. Lista definitiva de palavras reservadas para paths de space.
-2. Transcrição como campo do JSON — decidir na Fase 2.
-3. Modelo Gemini definitivo — confirmar na lista viva da API no momento da
+1. Transcrição como campo do JSON — decidir na Fase 2.
+2. Modelo Gemini definitivo — confirmar na lista viva da API no momento da
    Fase 1.
-4. Migrar o deploy da Vercel para o Railway — em que fase fazer o corte.
-5. **Deploy do Postgres — passo obrigatório, ainda não executado:** dev usa
+3. Migrar o deploy da Vercel para o Railway — em que fase fazer o corte.
+4. **Deploy do Postgres — passo obrigatório, ainda não executado:** dev usa
    Postgres local via Docker (Fase 3a); produção vai usar o Postgres do
    Railway, que está vazio — nenhuma migração foi aplicada nele ainda, só no
    Docker local. Antes de trocar o `DATABASE_URL` de produção, é preciso
@@ -473,5 +503,8 @@ mostrando próximas provas ordenadas.
    desenvolvimento) com o `DATABASE_URL` apontando para o Railway. Trocar só
    a env var sem isso quebra a aplicação na primeira query (tabela
    inexistente). Confirmado no `--help` do CLI instalado, não chutado.
+5. `Course`/`Session` usam cuid cru na URL ou ganham slug próprio? Decidir na
+   Fase 3c (ver nota na Fase 3 acima).
 
-> Resolvido: host confirmado como Railway (05/09/2026).
+> Resolvido: host confirmado como Railway (05/09/2026). Lista de palavras
+> reservadas para slug de space definida em `src/db/reservedSlugs.ts` (Fase 3b).
