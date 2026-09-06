@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { findSpaceBySlug } from "@/db/space.repository";
 import { listCoursesBySpace } from "@/db/course.repository";
+import IngestForm from "@/components/ingest-form";
 
 type Props = {
   params: Promise<{ space: string }>;
@@ -20,6 +21,7 @@ export default async function SpacePage({ params }: Props) {
   return (
     <main>
       <h1>{space.slug}</h1>
+      <IngestForm spaceSlug={space.slug} />
       {courses.length === 0 ? (
         <p>Nenhum curso registrado ainda neste espaço.</p>
       ) : (

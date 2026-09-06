@@ -1,5 +1,12 @@
 import "@testing-library/jest-dom/vitest";
+import { afterEach } from "vitest";
+import { cleanup } from "@testing-library/react";
 import { config } from "dotenv";
+
+// Sem `test.globals: true` no vitest.config.mts, o auto-cleanup do Testing
+// Library entre testes não é detectado — sem isso, cada render() num mesmo
+// arquivo empilha DOM sobre o anterior em vez de desmontar.
+afterEach(cleanup);
 
 // Precisa rodar (com override) antes de qualquer módulo dar `import
 // "dotenv/config"` (ex.: src/db/client.ts), que carrega .env sem override —
