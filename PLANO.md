@@ -4,7 +4,7 @@
 > de execução. Atualizar a cada fase concluída.
 >
 > Última atualização: 06/09/2026 · Fases 0, 1, 2 e 3 (3a, 3b, 3c) concluídas ·
-> Fase 4a concluída
+> Fase 4a e 4b concluídas
 
 ---
 
@@ -557,8 +557,48 @@ Decomposta como a Fase 3, mesmo padrão de gates.
     configurada aqui — confirma que o job termina em `error` de forma
     limpa, sem travar a requisição) e os três caminhos de erro (space
     inexistente, campo obrigatório faltando, job inexistente).
-- **4b — Tela de upload:** formulário dentro de `/[space]` + polling de
-  status até a sessão ficar pronta.
+- **4b — Tela de upload ✅ CONCLUÍDA:** `src/components/ingest-form/` —
+  Client Component sem MUI Joy (input `file` de áudio, `date` da gravação,
+  dois campos de texto opcionais como hint pra IA), integrado em
+  `/[space]/page.tsx`. Submete via `fetch` pro `POST /api/[space]/ingest`
+  já existente e faz polling (`setInterval` de 2s) em
+  `GET /api/[space]/ingest/[jobId]` até `done` (redireciona pro `/[space]`
+  com `router.push` + `router.refresh()`, pra reler do Postgres) ou `error`
+  (mostra a mensagem e reabilita o form).
+  - **Polling com `setInterval` fixo, decisão consciente:** o callback é
+    `async` e o intervalo não espera a resposta anterior antes de contar os
+    2s seguintes — em tese duas requisições podem ficar em voo se uma
+    demorar mais que isso. Aceito de propósito: é uma leitura idempotente e
+    rápida no Postgres, não em cima do Gemini; `setTimeout` recursivo
+    resolveria mas adicionaria código sem um problema real observado.
+  - **Achado de teste, não de produção:** `user-event.upload()` simula
+    `input.files` sobrescrevendo a propriedade só no wrapper JS do
+    elemento; o construtor nativo `new FormData(form)` do jsdom lê o objeto
+    impl interno, que esse mock não atualiza — em teste, o campo de áudio
+    sempre chega como `File` vazio (`name: ''`, `size: 0`) dentro do
+    FormData capturado, mesmo com `input.files[0].name` certo um instante
+    antes. Limitação documentada da dupla jsdom+user-event, não do
+    componente (funciona normalmente em browser real, confirmado na
+    verificação manual). Os testes verificam o arquivo pelo `input.files`
+    do DOM, não pelo conteúdo do `FormData` enviado ao `fetch`.
+  - **`afterEach(cleanup)` faltando em `vitest.setup.ts`:** sem
+    `test.globals: true` no `vitest.config.mts`, o auto-cleanup do Testing
+    Library entre testes não era acionado — o primeiro arquivo de teste com
+    múltiplos `render()` (`ingest-form`) empilhava DOM de um teste sobre o
+    outro. Corrigido no setup global; não é específico deste componente.
+  - **Cuidado de ambiente, não de código:** rodar `npm run build` com
+    `npm run dev` já ativo corrompe o `.next/` compartilhado entre os dois
+    (o dev passa a referenciar chunks que o build de produção sobrescreveu,
+    erro `Cannot find module './vendor-chunks/@mui.js'`). Resolvido matando
+    o processo de dev, apagando `.next/` e subindo de novo. Não rodar os
+    dois processos ao mesmo tempo apontando pro mesmo `.next/`.
+  - Verificado na mão contra o dev server local: upload de um arquivo,
+    submit, job criado, polling detecta `error` (sem `GEMINI_API_KEY`
+    configurada aqui — mesma situação da verificação da 4a) e reabilita o
+    formulário com a mensagem certa. O caminho `done` → redirect só foi
+    exercitado pelo teste automatizado com `fetch` mockado — depende de
+    `GEMINI_API_KEY` real pra ser visto no navegador, pendência que já
+    existia desde a Fase 1 (`npm run try:ai`).
 - **4c — Deploy real no Railway:** `prisma migrate deploy` contra o banco
   de produção (pendência já registrada em §8) + corte Vercel→Railway.
 
