@@ -3,7 +3,7 @@
 > Documento de trabalho. Registra as decisões tomadas, o motivo delas e a ordem
 > de execução. Atualizar a cada fase concluída.
 >
-> Última atualização: 05/09/2026 · Fases 0, 1 e 2 concluídas
+> Última atualização: 06/09/2026 · Fases 0, 1 e 2 concluídas · Fase 3a concluída
 
 ---
 
@@ -356,17 +356,71 @@ válida, `null`, e formato inválido. `tsc`, Vitest, lint e `next build`
 passando. Verificação manual contra a API real ainda pendente (mesma ressalva
 da Fase 1 — ver `npm run try:ai`).
 
-### Fase 3 — Persistência
+### Fase 3 — Persistência (Prisma + Postgres no Railway)
 
-- Postgres no Railway
-- Modelo: `space` → `course` → `session` (o `space` é conceito novo, só de
-  persistência/rota — não existe no output da IA)
-- Renomear `JsonResponse.ts`, `collectionTypes.ts`, `firebase.service.ts` e os
-  componentes de UI para os nomes já adotados no pipeline de IA na Fase 2
-- Rotas `/[space]/...` + lista de palavras reservadas
-- Home deixa de listar qualquer coisa
-- Script de migração dos dados atuais do Firestore
-- Remoção do `firebase` do projeto
+Postgres já criado no Railway (05/09/2026). Decomposta em 3 sub-fases com gate
+cada uma, por ser maior que as fases anteriores.
+
+**ORM: Prisma**, não Drizzle. Cheguei a propor Drizzle (mais leve, sem etapa de
+geração de código) — Douglas preferiu Prisma por familiaridade. Achado que muda
+o argumento original: **Prisma 7 usa driver adapters** (`@prisma/adapter-pg`)
+em vez do binário Rust antigo, então a crítica de peso/complexidade não se
+aplica mais à versão atual.
+
+**Versões fixadas** (a tag `latest` do pacote `prisma` no npm aponta pra uma
+release candidate, `8.0.0-rc.13` — a estável real é `7.10.0`, valor de `prev`):
+```
+prisma@7.10.0, @prisma/client@7.10.0, @prisma/adapter-pg, pg, dotenv, @types/pg
+```
+
+**Decisão de schema:** `future_tasks.items[]` e `mentioned_dates[]` viram
+**tabelas próprias** (`task_items`, `mentioned_dates`, FK pra `session`), não
+coluna JSONB. Motivo: o dashboard da Fase 5 ("próximas provas do space
+inteiro") cruza tarefas de várias sessions ordenadas por data — com JSONB isso
+vira decodificar e ordenar na mão em JS; com tabela normalizada é
+`ORDER BY due_date_iso` direto no banco. `tags` continua array nativo do
+Postgres (`text[]`) — sem esse cruzamento entre sessions, e ganha busca de
+graça com índice GIN.
+
+**Sem migração dos dados do Firestore** — decisão explícita do Douglas, não é
+prioridade agora nem está planejada pra "depois" com prazo. Os dados continuam
+existindo no Firestore, só o código para de lê-los. Recuperável manualmente se
+um dia fizer sentido.
+
+- **3a — Setup ✅ CONCLUÍDA:** `schema.prisma`, primeira migração, conexão
+  verificada. Sem app conectado ainda.
+  - **Postgres local via Docker Compose para desenvolvimento**, não a conexão
+    direta com o Railway — desvio da proposta original. O `DATABASE_URL`
+    inicial fornecido era `postgres.railway.internal`, endereço da rede
+    **interna** do Railway, inalcançável de fora (a migração falhou com
+    `P1001: Can't reach database server`). Em vez de trocar pela connection
+    string pública do Railway, decisão do Douglas foi manter um Postgres local
+    (`docker-compose.yml`, porta `5434` — `5432`/`5433` já ocupadas por outros
+    projetos na máquina) como banco de desenvolvimento, deixando o Postgres do
+    Railway só para produção. A connection string do Railway ficou comentada
+    no `.env` local para referência futura (deploy).
+  - `npx prisma init` (sem `--no-skills`) tentou instalar ~60 arquivos de
+    documentação-como-skill do repositório `prisma/skills` em `.claude/`,
+    `.agents/` e `.windsurf/` — não solicitado, removido e o init refeito com
+    `--no-skills`.
+  - `prisma` e `@types/pg` foram parar em `dependencies` no primeiro
+    `npm install`; movidos para `devDependencies` (CLI e tipos não são runtime).
+  - Cliente gerado em `src/generated/prisma/` (gitignored) via `provider =
+    "prisma-client"`; wrapper de conexão em `src/db/client.ts` usando
+    `@prisma/adapter-pg`. Confirmado com escrita/leitura/remoção reais contra
+    o Postgres local antes de seguir.
+- **3b — Camada de persistência:** módulo de queries (equivalente ao
+  `firebase.service.ts`) + adaptador de `CourseExtractionResult` (Fase 2) pra
+  linhas do banco. Testes na lógica determinística (geração do secret de
+  escrita do space, validação de slug contra a lista de reservados).
+- **3c — Rotas:** `/`, `/[space]`, `/[space]/[course]`, `/[space]/[course]/
+  [session]` passam a ler do Postgres. Home para de listar tudo. Ao final,
+  `firebase.service.ts`, `collectionTypes.ts`, `firebase.config.ts` e o
+  pacote `firebase` são removidos — uma vez que nada mais lê do Firestore,
+  vira código morto.
+
+**DoD:** as 3 sub-fases fechadas, `tsc`/testes/lint/build passando em cada
+gate, rotas novas funcionando sobre dados criados via Prisma (não migrados).
 
 **DoD:** dados atuais migrados e visíveis nas rotas novas; nenhuma rota enumera
 spaces.
@@ -411,5 +465,13 @@ mostrando próximas provas ordenadas.
 3. Modelo Gemini definitivo — confirmar na lista viva da API no momento da
    Fase 1.
 4. Migrar o deploy da Vercel para o Railway — em que fase fazer o corte.
+5. **Deploy do Postgres — passo obrigatório, ainda não executado:** dev usa
+   Postgres local via Docker (Fase 3a); produção vai usar o Postgres do
+   Railway, que está vazio — nenhuma migração foi aplicada nele ainda, só no
+   Docker local. Antes de trocar o `DATABASE_URL` de produção, é preciso
+   rodar `npx prisma migrate deploy` (não `migrate dev` — esse é só para
+   desenvolvimento) com o `DATABASE_URL` apontando para o Railway. Trocar só
+   a env var sem isso quebra a aplicação na primeira query (tabela
+   inexistente). Confirmado no `--help` do CLI instalado, não chutado.
 
 > Resolvido: host confirmado como Railway (05/09/2026).

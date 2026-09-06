@@ -1,0 +1,95 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// O "space" é o conceito Dontpad: slug público para leitura, secret separado
+// para escrita (ver PLANO.md §4.1). Não existe no output da IA — é conceito
+// só de persistência/rota.
+model Space {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  writeSecret String   @unique @map("write_secret")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  courses Course[]
+
+  @@map("spaces")
+}
+
+model Course {
+  id        String @id @default(cuid())
+  spaceId   String @map("space_id")
+  name      String
+  professor String
+
+  space    Space     @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  sessions Session[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("courses")
+}
+
+// Espelha CourseExtractionResult/Session (src/services/ai/types.ts), com
+// recording_date e prompt_version injetados pelo pipeline de IA após o
+// parse — não pedidos ao modelo (ver PLANO.md, Fase 2).
+model Session {
+  id       String @id @default(cuid())
+  courseId String @map("course_id")
+
+  title               String
+  summary             String
+  offTopic            String @map("off_topic")
+  futureTasksOverview String @map("future_tasks_overview")
+  classActivities     String @map("class_activities")
+  fullTranscript      String @map("full_transcript")
+
+  recordingDate DateTime @map("recording_date") @db.Date
+  promptVersion String   @map("prompt_version")
+  tags          String[]
+
+  course         Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  taskItems      TaskItem[]
+  mentionedDates MentionedDate[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("sessions")
+}
+
+// Tabela própria (não JSONB) para permitir ORDER BY due_date_iso direto no
+// banco ao cruzar tarefas de várias sessions no dashboard (PLANO.md, Fase 3).
+model TaskItem {
+  id          String @id @default(cuid())
+  sessionId   String @map("session_id")
+  title       String
+  description String
+
+  dueDateIso          DateTime? @map("due_date_iso") @db.Date
+  dueDateOriginalText String    @map("due_date_original_text")
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("task_items")
+}
+
+model MentionedDate {
+  id        String @id @default(cuid())
+  sessionId String @map("session_id")
+
+  dateIso      DateTime? @map("date_iso") @db.Date
+  originalText String    @map("original_text")
+  description  String
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("mentioned_dates")
+}

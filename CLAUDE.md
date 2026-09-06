@@ -8,8 +8,14 @@ está pendente. Não repita aqui o que já está lá.
 
 - **Next.js 15** (App Router), **React 19**, TypeScript
 - **@google/genai** — SDK oficial do Gemini (modelo: `gemini-3.8-flash`)
-- **Firestore** (`firebase` 11.6.0) — em processo de substituição por Postgres
-  (ver PLANO.md §4.2). Não expandir uso do Firestore.
+- **Prisma 7** (`@prisma/adapter-pg`, driver adapters — sem o binário Rust
+  antigo) + **Postgres** — substituindo o Firestore (ver PLANO.md, Fase 3).
+  Client gerado em `src/generated/prisma/` (gitignored, `npm run db:generate`
+  para regerar). Config em `prisma7.config.ts` (nome versionado — não renomear,
+  o CLI resolve esse nome especificamente).
+- **Firestore** (`firebase` 11.6.0) — sendo substituído por Postgres/Prisma.
+  Não expandir uso do Firestore; não migrar os dados existentes (decisão
+  explícita — ver PLANO.md, Fase 3).
 - **MUI Joy + Emotion + SCSS Modules** — em processo de substituição por
   shadcn/ui + Tailwind (ver PLANO.md §4.5). Não adicionar componentes MUI Joy
   novos.
@@ -22,27 +28,46 @@ está pendente. Não repita aqui o que já está lá.
 ## Comandos
 
 ```bash
-npm run dev         # dev server
-npm run build       # build de produção
-npm start           # servir build de produção
-npm test            # rodar testes (Vitest)
-npm run test:watch  # testes em watch mode
-npm run lint        # eslint (next lint)
-npm run try:ai      # verificação manual do pipeline de IA contra a API real
-                     # (exige GEMINI_API_KEY e um áudio de exemplo — ver o
-                     # cabeçalho de scripts/try-generate-course-extraction.ts)
+npm run dev          # dev server
+npm run build        # build de produção
+npm start            # servir build de produção
+npm test             # rodar testes (Vitest)
+npm run test:watch   # testes em watch mode
+npm run lint         # eslint (next lint)
+npm run try:ai       # verificação manual do pipeline de IA contra a API real
+                      # (exige GEMINI_API_KEY e um áudio de exemplo — ver o
+                      # cabeçalho de scripts/try-generate-course-extraction.ts)
+
+npm run db:migrate   # cria e aplica migração (prisma migrate dev)
+npm run db:generate  # regenera o client a partir do schema.prisma
+npm run db:studio    # abre o Prisma Studio (GUI do banco)
 ```
 
 Antes de qualquer commit: `npm test` (tudo passando) e `npm run lint` (zero
 erros nos arquivos tocados).
 
+## Banco de dados local
+
+`docker compose up -d` sobe um Postgres local na porta `5434` (não `5432`, já
+ocupada por outro projeto na máquina — ver `docker-compose.yml`). É o banco de
+desenvolvimento; a connection string do Postgres do Railway (produção) fica
+comentada no `.env` local, não em uso ativo.
+
 ## Estrutura
 
 ```
+prisma/
+  schema.prisma            # modelos: Space, Course, Session, TaskItem,
+                            # MentionedDate (ver PLANO.md, Fase 3)
+  migrations/
+docker-compose.yml          # Postgres local de desenvolvimento
 src/
   app/                     # rotas Next.js (App Router)
   components/              # componentes React (MUI Joy — a migrar)
   config/                  # config do Firebase
+  db/
+    client.ts              # PrismaClient + adapter-pg, lê DATABASE_URL
+  generated/prisma/        # client gerado (gitignored, não editar à mão)
   services/
     ai/                    # pipeline de ingestão (Gemini) — TypeScript puro,
                             # sem HTTP, sem banco. Ver seção "Pipeline de IA".

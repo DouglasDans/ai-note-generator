@@ -50,3 +50,6 @@ next-env.d.ts
 
 # editors
 .idea/
+
+# prisma generated client
+/src/generated/prisma

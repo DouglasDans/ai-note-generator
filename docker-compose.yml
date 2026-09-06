@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ai-note-generator-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ai_note_generator
+      POSTGRES_PASSWORD: ai_note_generator
+      POSTGRES_DB: ai_note_generator
+    ports:
+      - "5434:5432"
+    volumes:
+      - ai-note-generator-postgres-data:/var/lib/postgresql/data
+
+volumes:
+  ai-note-generator-postgres-data:
