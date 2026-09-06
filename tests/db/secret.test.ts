@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { generateWriteSecret } from "./secret";
+import { generateWriteSecret } from "@/db/secret";
 
 describe("generateWriteSecret", () => {
   it("generates a URL-safe string with no padding characters", () => {

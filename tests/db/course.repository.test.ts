@@ -1,12 +1,12 @@
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "@/db/client";
-import { createSpace } from "./space.repository";
+import { createSpace } from "@/db/space.repository";
 import {
-  getCourseWithSessions,
-  getSessionById,
+  getCourseBySlug,
+  getSessionBySlug,
   listCoursesBySpace,
   persistCourseExtraction,
-} from "./course.repository";
+} from "@/db/course.repository";
 import type { CourseExtractionResult } from "@/services/ai/types";
 
 beforeEach(async () => {
@@ -17,7 +17,7 @@ afterAll(async () => {
   await prisma.$disconnect();
 });
 
-function validExtraction(): CourseExtractionResult {
+function extractionWithSession(sessionTitle: string): CourseExtractionResult {
   return {
     full_transcript: "Transcrição completa da aula.",
     courses: [
@@ -26,7 +26,7 @@ function validExtraction(): CourseExtractionResult {
         professor: "Fulano",
         sessions: [
           {
-            title: "Normalização",
+            title: sessionTitle,
             summary: "Resumo",
             off_topic: "",
             future_tasks: {
@@ -59,15 +59,16 @@ function validExtraction(): CourseExtractionResult {
 }
 
 describe("persistCourseExtraction + reads", () => {
-  it("persists courses, sessions, task items and mentioned dates, all readable back", async () => {
+  it("persists course/session with generated slugs, readable back by slug", async () => {
     const space = await createSpace("fatec-gestao-2026");
 
     const [createdCourse] = await persistCourseExtraction(
       space.id,
-      validExtraction()
+      extractionWithSession("Normalização")
     );
 
-    expect(createdCourse.name).toBe("Banco de Dados");
+    expect(createdCourse.slug).toBe("banco-de-dados");
+    expect(createdCourse.sessions[0].slug).toBe("normalizacao");
     expect(createdCourse.sessions[0].taskItems[0].dueDateIso).toEqual(
       new Date("2026-04-10")
     );
@@ -75,38 +76,71 @@ describe("persistCourseExtraction + reads", () => {
     const courses = await listCoursesBySpace(space.id);
     expect(courses).toHaveLength(1);
 
-    const courseWithSessions = await getCourseWithSessions(
-      createdCourse.id,
-      space.id
-    );
-    expect(courseWithSessions?.sessions).toHaveLength(1);
+    const courseBySlug = await getCourseBySlug(space.id, "banco-de-dados");
+    expect(courseBySlug?.sessions).toHaveLength(1);
 
-    const session = await getSessionById(
-      createdCourse.sessions[0].id,
-      createdCourse.id
-    );
+    const session = await getSessionBySlug(createdCourse.id, "normalizacao");
     expect(session?.taskItems).toHaveLength(1);
     expect(session?.mentionedDates).toHaveLength(1);
     expect(session?.fullTranscript).toBe("Transcrição completa da aula.");
   });
 
-  it("does not leak a course from another space via getCourseWithSessions", async () => {
+  it("appends a session to an existing course instead of duplicating it", async () => {
+    const space = await createSpace("fatec-gestao-2026");
+
+    const [firstCall] = await persistCourseExtraction(
+      space.id,
+      extractionWithSession("Normalização")
+    );
+    const [secondCall] = await persistCourseExtraction(
+      space.id,
+      extractionWithSession("Índices")
+    );
+
+    expect(secondCall.id).toBe(firstCall.id);
+
+    const courses = await listCoursesBySpace(space.id);
+    expect(courses).toHaveLength(1);
+
+    const courseBySlug = await getCourseBySlug(space.id, "banco-de-dados");
+    expect(courseBySlug?.sessions.map((s) => s.slug).sort()).toEqual([
+      "indices",
+      "normalizacao",
+    ]);
+  });
+
+  it("suffixes the session slug when two sessions of the same course share a title", async () => {
+    const space = await createSpace("fatec-gestao-2026");
+
+    await persistCourseExtraction(space.id, extractionWithSession("Revisão"));
+    // course.update com sessão nova retorna TODAS as sessões do curso via
+    // include (antiga + nova), não só a recém-criada — por isso comparamos o
+    // conjunto de slugs, não um índice fixo.
+    const [secondCall] = await persistCourseExtraction(
+      space.id,
+      extractionWithSession("Revisão")
+    );
+
+    expect(secondCall.sessions.map((s) => s.slug).sort()).toEqual([
+      "revisao",
+      "revisao-2",
+    ]);
+  });
+
+  it("does not leak a course from another space via getCourseBySlug", async () => {
     const spaceA = await createSpace("space-a");
     const spaceB = await createSpace("space-b");
 
-    const [courseInA] = await persistCourseExtraction(
-      spaceA.id,
-      validExtraction()
-    );
+    await persistCourseExtraction(spaceA.id, extractionWithSession("Normalização"));
 
-    const result = await getCourseWithSessions(courseInA.id, spaceB.id);
+    const result = await getCourseBySlug(spaceB.id, "banco-de-dados");
 
     expect(result).toBeNull();
   });
 
   it("cascades deletion from space down to task items and mentioned dates", async () => {
     const space = await createSpace("fatec-gestao-2026");
-    await persistCourseExtraction(space.id, validExtraction());
+    await persistCourseExtraction(space.id, extractionWithSession("Normalização"));
 
     await prisma.space.delete({ where: { id: space.id } });
 

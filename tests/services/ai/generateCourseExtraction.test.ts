@@ -2,8 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 import {
   generateCourseExtraction,
   type GenAIClient,
-} from "./generateCourseExtraction.ts";
-import { COURSE_EXTRACTION_RESPONSE_SCHEMA } from "./schema.ts";
+} from "@/services/ai/generateCourseExtraction";
+import { COURSE_EXTRACTION_RESPONSE_SCHEMA } from "@/services/ai/schema";
 
 function fakeClient(overrides?: {
   text?: string;

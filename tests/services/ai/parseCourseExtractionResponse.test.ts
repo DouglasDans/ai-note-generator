@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   CourseExtractionParseError,
   parseCourseExtractionResponse,
-} from "./parseCourseExtractionResponse.ts";
-import type { SessionExtraction, TaskItem } from "./types.ts";
+} from "@/services/ai/parseCourseExtractionResponse";
+import type { SessionExtraction, TaskItem } from "@/services/ai/types";
 
 function validTaskItem(): TaskItem {
   return {

@@ -7,8 +7,8 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     setupFiles: ["./vitest.setup.ts"],
-    include: ["src/**/*.{test,spec}.{ts,tsx}"],
-    // Os testes de src/db/ batem no mesmo Postgres real (docker compose) e
+    include: ["tests/**/*.{test,spec}.{ts,tsx}"],
+    // Os testes de tests/db/ batem no mesmo Postgres real (docker compose) e
     // fazem beforeEach(prisma.space.deleteMany()) — em paralelo, um arquivo
     // limpa a tabela no meio do teste de outro. Suíte é pequena o bastante
     // para não sentir o custo de rodar sequencial.

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mapCourseExtractionToRows } from "./mapCourseExtractionToRows";
+import { mapCourseExtractionToRows } from "@/db/mapCourseExtractionToRows";
 import type { CourseExtractionResult } from "@/services/ai/types";
 
 function validResult(): CourseExtractionResult {

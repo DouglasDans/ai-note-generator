@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildSystemInstruction } from "./prompt";
+import { buildSystemInstruction } from "@/services/ai/prompt";
 
 describe("buildSystemInstruction", () => {
   it("replaces the date placeholder with a sentence anchoring the recording date", () => {

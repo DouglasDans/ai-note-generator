@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { InvalidSlugError, normalizeAndValidateSlug } from "./slug";
+import { InvalidSlugError, normalizeAndValidateSlug } from "@/db/slug";
 
 describe("normalizeAndValidateSlug", () => {
   it("lowercases and trims a valid slug", () => {

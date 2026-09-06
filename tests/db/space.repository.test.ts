@@ -1,7 +1,7 @@
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "@/db/client";
-import { createSpace, findSpaceBySlug, SlugTakenError } from "./space.repository";
-import { InvalidSlugError } from "./slug";
+import { createSpace, findSpaceBySlug, SlugTakenError } from "@/db/space.repository";
+import { InvalidSlugError } from "@/db/slug";
 
 // Testes de integração contra o Postgres local (docker compose up -d) — ao
 // contrário do pipeline de IA, uma query Postgres é determinística: um typo
