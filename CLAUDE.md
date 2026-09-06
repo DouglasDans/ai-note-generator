@@ -9,13 +9,11 @@ está pendente. Não repita aqui o que já está lá.
 - **Next.js 15** (App Router), **React 19**, TypeScript
 - **@google/genai** — SDK oficial do Gemini (modelo: `gemini-3.8-flash`)
 - **Prisma 7** (`@prisma/adapter-pg`, driver adapters — sem o binário Rust
-  antigo) + **Postgres** — substituindo o Firestore (ver PLANO.md, Fase 3).
-  Client gerado em `src/generated/prisma/` (gitignored, `npm run db:generate`
-  para regerar). Config em `prisma7.config.ts` (nome versionado — não renomear,
-  o CLI resolve esse nome especificamente).
-- **Firestore** (`firebase` 11.6.0) — sendo substituído por Postgres/Prisma.
-  Não expandir uso do Firestore; não migrar os dados existentes (decisão
-  explícita — ver PLANO.md, Fase 3).
+  antigo) + **Postgres**. Client gerado em `src/generated/prisma/`
+  (gitignored, `npm run db:generate` para regerar). Config em
+  `prisma7.config.ts` (nome versionado — não renomear, o CLI resolve esse
+  nome especificamente). Firestore/`firebase` foram removidos por completo na
+  Fase 3 (sem migração de dados — decisão explícita, ver PLANO.md).
 - **MUI Joy + Emotion + SCSS Modules** — em processo de substituição por
   shadcn/ui + Tailwind (ver PLANO.md §4.5). Não adicionar componentes MUI Joy
   novos.
@@ -61,28 +59,30 @@ prisma/
                             # MentionedDate (ver PLANO.md, Fase 3)
   migrations/
 docker-compose.yml          # Postgres local de desenvolvimento
+tests/                     # espelha src/ — ver seção "Testes"
 src/
-  app/                     # rotas Next.js (App Router)
+  app/
+    page.tsx + actions.ts  # home: só um form pra entrar/criar space (sem
+                            # listar nada — modelo Dontpad, PLANO.md 4.1)
+    [space]/page.tsx                      # lista cursos do space
+    [space]/[course]/page.tsx             # lista sessions do curso
+    [space]/[course]/[session]/page.tsx   # detalhe da sessão
   components/              # componentes React (MUI Joy — a migrar)
-  config/                  # config do Firebase
   db/
     client.ts              # PrismaClient + adapter-pg, lê DATABASE_URL
     *.repository.ts        # queries (space, course/session) — ver seção
                             # "Camada de persistência"
     mapCourseExtractionToRows.ts  # CourseExtractionResult (IA) -> shape do Prisma
+    generateUniqueSlug.ts  # slugifica + resolve colisão com sufixo numérico
     slug.ts, secret.ts     # validação de slug de space e geração de writeSecret
   generated/prisma/        # client gerado (gitignored, não editar à mão)
   services/
     ai/                    # pipeline de ingestão (Gemini) — TypeScript puro,
                             # sem HTTP, sem banco. Ver seção "Pipeline de IA".
-    firebase.service.ts    # acesso ao Firestore (a substituir)
   prompts/
     prompt.md              # o prompt do Gemini — ativo central do projeto,
                             # versionado via "prompt_version" nos dados salvos
-  styles/, theme/           # SCSS Modules + Emotion (a migrar)
-  types/                   # JsonResponse.ts é o shape LEGADO já gravado no
-                            # Firestore hoje (não o que o pipeline de IA
-                            # produz desde a Fase 2 — ver nota abaixo)
+  theme/                   # Emotion (a migrar)
 scripts/                   # utilitários executados via `node` puro — ver nota
                             # de convenção de import abaixo
 ```
@@ -96,12 +96,8 @@ validação da resposta (`parseCourseExtractionResponse.ts`) →
 
 - `schema.ts` e `types.ts` descrevem a mesma forma de dado em dois lugares
   (schema do Gemini vs. tipo TS). Se um mudar, o outro também precisa.
-- **`types.ts` (aqui) ≠ `src/types/JsonResponse.ts`.** São dois shapes
-  diferentes de propósito: `types.ts` é o que o pipeline de IA produz hoje
-  (inglês, datas ISO estruturadas); `JsonResponse.ts` é o formato legado já
-  gravado no Firestore (português, datas em string livre). Ainda não há código
-  ligando um ao outro — essa ponte (ou a substituição de um pelo outro) é
-  trabalho da Fase 3, quando a persistência migra pra Postgres.
+  `src/db/mapCourseExtractionToRows.ts` é quem converte `types.ts` pro shape
+  do Prisma (schema do banco) — ver seção "Camada de persistência".
 - `generateCourseExtraction()` recebe o client do `@google/genai` por
   parâmetro (`GenAIClient`, interface própria — não `Pick<GoogleGenAI, ...>`,
   porque as classes do SDK têm campos privados que quebrariam um fake de
@@ -140,15 +136,19 @@ Verificado que `tsc --noEmit`, Vitest e `next build` toleram a extensão.
 
 Fora de `src/services/ai/`, siga a convenção existente (imports extensionless,
 alias `@/` para `src/`) — não é necessário espalhar essa convenção pelo resto
-do projeto.
+do projeto. Isso vale também para os testes: mesmo testando algo dentro de
+`src/services/ai/`, o teste mora em `tests/` (fora dessa pasta), então importa
+sem extensão via `@/services/ai/...` — o `.ts` explícito é só entre os
+próprios arquivos de dentro de `src/services/ai/`.
 
 ## Testes
 
-Colocados junto do código (`arquivo.test.ts` ao lado de `arquivo.ts`), não em
-pasta `__tests__/` separada. `vitest.config.mts` inclui `src/**/*.{test,spec}.
-{ts,tsx}`.
+Ficam em `tests/`, espelhando a estrutura de `src/` (`src/db/slug.ts` →
+`tests/db/slug.test.ts`). Não são colocados ao lado do código — decisão
+tomada na Fase 3c, revertendo a convenção original do projeto (colocation).
+`vitest.config.mts` inclui `tests/**/*.{test,spec}.{ts,tsx}`.
 
-Os testes de `src/db/*.repository.test.ts` são de **integração real** contra
+Os testes de `tests/db/*.repository.test.ts` são de **integração real** contra
 o Postgres local (precisa de `docker compose up -d` rodando) — diferente do
 pipeline de IA, uma query com campo errado falha de forma determinística, não
 há motivo para fake aqui. `vitest.config.mts` tem `fileParallelism: false`

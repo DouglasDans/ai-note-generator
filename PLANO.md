@@ -3,7 +3,7 @@
 > Documento de trabalho. Registra as decisões tomadas, o motivo delas e a ordem
 > de execução. Atualizar a cada fase concluída.
 >
-> Última atualização: 06/09/2026 · Fases 0, 1 e 2 concluídas · Fase 3a e 3b concluídas
+> Última atualização: 06/09/2026 · Fases 0, 1, 2 e 3 (3a, 3b, 3c) concluídas
 
 ---
 
@@ -441,20 +441,69 @@ um dia fizer sentido.
     teste do outro (`beforeEach` com `deleteMany`). Corrigido com
     `fileParallelism: false` no `vitest.config.mts`; aceitável no tamanho
     atual da suíte (39 testes, ~3.7s).
-- **3c — Rotas:** `/`, `/[space]`, `/[space]/[course]`, `/[space]/[course]/
-  [session]` passam a ler do Postgres. Home para de listar tudo. Ao final,
-  `firebase.service.ts`, `collectionTypes.ts`, `firebase.config.ts` e o
-  pacote `firebase` são removidos — uma vez que nada mais lê do Firestore,
-  vira código morto.
-  - **Decisão em aberto para esta sub-fase:** `Course`/`Session` hoje só têm
-    `id` (cuid), sem slug legível — diferente do Firestore antigo, que usava
-    o nome sanitizado como ID do documento (e portanto como segmento de URL).
-    Decidir em 3c se as rotas usam o cuid cru (`/[space]/cmtp5xh.../...`) ou
-    se vale introduzir slug também para Course/Session (exigiria migração
-    nova no schema).
+- **3c — Rotas ✅ CONCLUÍDA:** `/`, `/[space]`, `/[space]/[course]`,
+  `/[space]/[course]/[session]` lendo do Postgres. `firebase.service.ts`,
+  `collectionTypes.ts`, `firebase.config.ts`, `JsonResponse.ts` e o pacote
+  `firebase` foram removidos, junto com os componentes só usados pelas rotas
+  antigas (`aula-content`, `link-list`, `index-menu`) e os diretórios que
+  ficaram vazios (`src/config`, `src/styles`, `src/types`). Next.js não
+  permite dois nomes de segmento dinâmico diferentes na mesma posição da
+  árvore de rotas — `[space]` e `[disciplina]` não coexistem, então essa
+  remoção não era opcional, fazia parte de implementar a rota nova.
 
-**DoD:** as 3 sub-fases fechadas, `tsc`/testes/lint/build passando em cada
-gate, rotas novas funcionando sobre dados criados via Prisma (não migrados).
+  **Course/Session ganharam slug** (decisão do Douglas, não adiada pra depois
+  como o rascunho original desta seção cogitava): `@@unique([spaceId, slug])`
+  e `@@unique([courseId, slug])` no schema, nova migração
+  (`20260906022014` — sem sufixo descritivo porque `prisma migrate dev`
+  exige TTY interativo, que o Bash não fornece; Douglas rodou no terminal
+  dele e apertou enter sem nomear). `src/db/generateUniqueSlug.ts` slugifica
+  e resolve colisão com sufixo numérico — necessário porque título de sessão
+  vem da IA e repetir é plausível (ex.: duas aulas "Revisão para prova" no
+  semestre); o sistema antigo usava o título como ID do documento no
+  Firestore e uma repetição sobrescrevia a aula anterior *silenciosamente*.
+
+  **Correção ao que já estava implementado na 3b:** `persistCourseExtraction`
+  sempre criava um `Course` novo. Ao adicionar a unique constraint de slug
+  por space, ficou claro que isso duplicaria cursos a cada upload E quebraria
+  com erro de constraint na segunda tentativa com o mesmo nome. Corrigido
+  para find-or-create por nome (case-insensitive) dentro do space — curso
+  existente só recebe a sessão nova, replicando o comportamento do
+  `main.py` original (nome sanitizado como ID do documento = upsert).
+
+  **Bug de fuso horário pego na verificação manual, não em teste automatizado:**
+  `session.recordingDate.toLocaleDateString("pt-BR")` exibia um dia a menos
+  em qualquer ambiente rodando num fuso atrás de UTC (confirmado: servidor em
+  America/Sao_Paulo, `new Date("2026-03-27")` virava "26/03/2026" na tela).
+  Causa: colunas `@db.Date` do Prisma sempre viram meia-noite UTC em JS, e
+  `toLocaleDateString` sem opção de fuso converte pro fuso local do processo
+  antes de formatar. Corrigido com `src/lib/formatDate.ts`
+  (`{ timeZone: "UTC" }` explícito), com teste que teria pegado a regressão.
+  Isso é exatamente o tipo de bug que só aparece olhando a página renderizada
+  — nenhum teste unitário/integração pegou, porque `new Date(...)` e
+  `.toLocaleDateString(...)` são chamadas "corretas" isoladamente; o erro só
+  existe na composição das duas rodando num fuso específico.
+
+  **Achado de infraestrutura, também pego na verificação manual:** os testes
+  de `tests/db/` e os dados de desenvolvimento (semeados na mão para testar
+  as páginas) compartilhavam o mesmo Postgres/`DATABASE_URL`. Rodar
+  `npm test` no meio da verificação apagou silenciosamente o space de teste
+  criado manualmente (via o `beforeEach(prisma.space.deleteMany())` dos
+  testes de repositório). Corrigido criando um banco `ai_note_generator_test`
+  separado (mesmo container Docker) e um `.env.test` (versionado — sem
+  segredo real, mesmas credenciais fixas do `docker-compose.yml`) carregado
+  com `override: true` em `vitest.setup.ts` antes de qualquer módulo dar
+  `import "dotenv/config"`. Precisa rodar `DATABASE_URL=...test npx prisma
+  migrate deploy` manualmente sempre que uma migração nova for criada — não
+  há automação disso ainda.
+
+  **Testes movidos para `tests/`**, espelhando `src/` — pedido explícito do
+  Douglas no meio desta sub-fase, revertendo a convenção de colocation
+  documentada desde a Fase 0. Ver `CLAUDE.md` para a convenção atual.
+
+**DoD:** as 3 sub-fases fechadas, `tsc`/testes/lint/build passando, rotas
+novas verificadas com dado real (seed manual, não migrado) via curl e
+navegador de verdade — incluindo os três caminhos do form da home (entrar em
+space existente, criar um novo, rejeitar slug reservado).
 
 ### Fase 4 — Upload pela web
 
@@ -491,20 +540,18 @@ mostrando próximas provas ordenadas.
 
 ## 8. Pontos em aberto
 
-1. Transcrição como campo do JSON — decidir na Fase 2.
-2. Modelo Gemini definitivo — confirmar na lista viva da API no momento da
-   Fase 1.
-3. Migrar o deploy da Vercel para o Railway — em que fase fazer o corte.
-4. **Deploy do Postgres — passo obrigatório, ainda não executado:** dev usa
+1. Modelo Gemini definitivo — confirmar na lista viva da API no momento da
+   Fase 1. (Confirmado `gemini-3.8-flash` na Fase 1 — reavaliar só se uma
+   fase futura tocar o pipeline de IA de novo.)
+2. Migrar o deploy da Vercel para o Railway — em que fase fazer o corte.
+3. **Deploy do Postgres — passo obrigatório, ainda não executado:** dev usa
    Postgres local via Docker (Fase 3a); produção vai usar o Postgres do
-   Railway, que está vazio — nenhuma migração foi aplicada nele ainda, só no
-   Docker local. Antes de trocar o `DATABASE_URL` de produção, é preciso
-   rodar `npx prisma migrate deploy` (não `migrate dev` — esse é só para
-   desenvolvimento) com o `DATABASE_URL` apontando para o Railway. Trocar só
-   a env var sem isso quebra a aplicação na primeira query (tabela
-   inexistente). Confirmado no `--help` do CLI instalado, não chutado.
-5. `Course`/`Session` usam cuid cru na URL ou ganham slug próprio? Decidir na
-   Fase 3c (ver nota na Fase 3 acima).
+   Railway, que está vazio — **duas** migrações pendentes lá (`init` e
+   `add_course_session_slugs`), nenhuma aplicada ainda. Antes de trocar o
+   `DATABASE_URL` de produção, rodar `npx prisma migrate deploy` (não
+   `migrate dev`) com o `DATABASE_URL` apontando para o Railway.
 
 > Resolvido: host confirmado como Railway (05/09/2026). Lista de palavras
-> reservadas para slug de space definida em `src/db/reservedSlugs.ts` (Fase 3b).
+> reservadas para slug de space definida em `src/db/reservedSlugs.ts` (Fase
+> 3b). Transcrição persistida como `full_transcript` (Fase 2). Course/Session
+> ganharam slug próprio, não usam cuid cru na URL (Fase 3c).

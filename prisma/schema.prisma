@@ -24,9 +24,14 @@ model Space {
   @@map("spaces")
 }
 
+// slug é único por space (não globalmente) — dois spaces podem ter, cada um,
+// um curso "banco-de-dados". Gerado a partir do nome na criação; ver
+// generateUniqueSlug.ts e a lógica de find-or-create em course.repository.ts
+// (reaproveita o curso existente por nome ao registrar nova sessão nele).
 model Course {
   id        String @id @default(cuid())
   spaceId   String @map("space_id")
+  slug      String
   name      String
   professor String
 
@@ -35,15 +40,18 @@ model Course {
 
   createdAt DateTime @default(now()) @map("created_at")
 
+  @@unique([spaceId, slug])
   @@map("courses")
 }
 
 // Espelha CourseExtractionResult/Session (src/services/ai/types.ts), com
 // recording_date e prompt_version injetados pelo pipeline de IA após o
 // parse — não pedidos ao modelo (ver PLANO.md, Fase 2).
+// slug único por curso (não globalmente) — mesma lógica do Course.slug.
 model Session {
   id       String @id @default(cuid())
   courseId String @map("course_id")
+  slug     String
 
   title               String
   summary             String
@@ -62,6 +70,7 @@ model Session {
 
   createdAt DateTime @default(now()) @map("created_at")
 
+  @@unique([courseId, slug])
   @@map("sessions")
 }
 
