@@ -1,21 +1,17 @@
-import { Button } from "@mui/joy";
 import Link from "next/link";
-import styles from './index.module.scss'
+import { Home } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import ThemeToggle from "@/components/theme-toggle";
 
 export default function Navbar() {
   return (
-    <nav className={styles.navContainer}>
-      <div className={styles.linkContainer}>
-        <Link href={"/"}>
-          <Button variant="outlined" color="neutral" size="sm">
-            <span>🏠 Home</span>
-          </Button>
-        </Link>
-      </div>
-      <div>
-        <ThemeToggle />
-      </div>
+    <nav className="flex items-center justify-between pb-6">
+      <Link href="/" className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
+        <Home className="size-4" />
+        Home
+      </Link>
+      <ThemeToggle />
     </nav>
-  )
+  );
 }

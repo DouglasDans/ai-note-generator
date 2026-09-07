@@ -1,30 +1,43 @@
-'use client';
+"use client";
 
-import { useColorScheme } from '@mui/joy/styles';
-import IconButton from '@mui/joy/IconButton';
-import { useEffect, useState } from 'react';
+import { useTheme } from "next-themes";
+import { useSyncExternalStore } from "react";
+import { Moon, Sun } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+const emptySubscribe = () => () => {};
+
+// Alternativa ao padrão `useEffect(() => setMounted(true), [])`: evita
+// hidratação divergente sem disparar setState dentro de um efeito
+// (react-hooks/set-state-in-effect).
+function useMounted() {
+  return useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false,
+  );
+}
 
 export default function ThemeToggle() {
-  const { mode, setMode } = useColorScheme();
-  const [mounted, setMounted] = useState(false);
-
-  // Necessário para evitar problemas de hidratação do SSR
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const { resolvedTheme, setTheme } = useTheme();
+  const mounted = useMounted();
 
   if (!mounted) {
-    return <IconButton size="sm" variant="outlined" color="neutral" disabled />;
+    return (
+      <Button variant="outline" size="icon" disabled aria-label="Alternar tema">
+        <Sun className="size-4" />
+      </Button>
+    );
   }
 
   return (
-    <IconButton
-      size="sm"
-      variant="outlined"
-      color="neutral"
-      onClick={() => setMode(mode === 'dark' ? 'light' : 'dark')}
+    <Button
+      variant="outline"
+      size="icon"
+      aria-label="Alternar tema"
+      onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
     >
-      {mode === 'dark' ? '🌙' : '☀️'}
-    </IconButton>
+      {resolvedTheme === "dark" ? <Moon className="size-4" /> : <Sun className="size-4" />}
+    </Button>
   );
 }

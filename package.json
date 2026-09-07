@@ -15,12 +15,9 @@
     "db:studio": "prisma studio"
   },
   "dependencies": {
-    "@emotion/react": "^11.14.0",
-    "@emotion/styled": "^11.14.0",
     "@google/genai": "^2.21.0",
     "@mdx-js/loader": "^3.1.0",
     "@mdx-js/react": "^3.1.0",
-    "@mui/joy": "^5.0.0-beta.52",
     "@next/mdx": "^16.3.4",
     "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.10.0",

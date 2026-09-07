@@ -734,11 +734,25 @@ ui.shadcn.com/docs/{cli,react-19,dark-mode/next,theming}.
     ainda adiado pra 5b — nada novo), verificado visualmente via
     screenshot que a home segue idêntica (nada consome Tailwind/shadcn na
     página ainda).
-- **5b — Casca:** `next-themes` substitui `theme-registry.tsx`; `navbar` e
-  `theme-toggle` reconstruídos com shadcn `Button` + `useTheme()`; deleta
-  `src/theme/`; remove `@mui/joy` + `@emotion/*` do `package.json`.
-  **Gate:** toggle dark/light funcionando e persistindo, build/test/lint
-  limpos.
+- **5b — Casca ✅ CONCLUÍDA:** `next-themes` (`ThemeProvider attribute="class"`
+  em `layout.tsx`) substitui `theme-registry.tsx`/`emotion-cache.tsx`
+  (deletados, `src/theme/` não existe mais); `navbar` e `theme-toggle`
+  reconstruídos com `Button`/`buttonVariants` do shadcn + ícones
+  `lucide-react`; `@mui/joy` + `@emotion/react` + `@emotion/styled`
+  removidos do `package.json`.
+  - **Fonte:** mantido Open Sans (decisão de design já registrada), não o
+    Inter que o `shadcn init` da 5a tinha adicionado por padrão — variável
+    renomeada de `--font-geist-sans` pra `--font-sans` pra bater com o
+    token de tema que o shadcn gera no `globals.css`.
+  - **Corrigido de fato, não só adiado:** o erro de lint
+    `react-hooks/set-state-in-effect` pendente desde a Fase 4.5 (padrão
+    `useEffect(() => setMounted(true), [])` pra evitar mismatch de
+    hidratação) — resolvido com `useSyncExternalStore` (getSnapshot
+    `true`/getServerSnapshot `false`), que resolve o mesmo problema sem
+    setState dentro de efeito. `npm run lint` sai limpo agora.
+  - **Gate:** toggle dark/light testado no navegador (clique muda o ícone
+    sol/lua e o tema; reload mantém o tema escolhido, sem flash), build/
+    test(56/56)/lint limpos.
 - **5c — Páginas:** home, `/[space]` (lista de cursos + `IngestForm`
   reestilizado), `/[course]`, `/[session]` (conteúdo MDX, tags, tarefas)
   com componentes shadcn (`button`, `input`, `label`, `card`, `badge`,
