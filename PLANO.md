@@ -1062,18 +1062,22 @@ job criado em `aaa` aparece no indicador de `aaa`, space
 
 ## 8. Pontos em aberto
 
-1. Modelo Gemini definitivo — confirmar na lista viva da API no momento da
-   Fase 1. (Confirmado `gemini-3.8-flash` na Fase 1 — reavaliar só se uma
-   fase futura tocar o pipeline de IA de novo.)
-2. Migrar o deploy da Vercel para o Railway — em que fase fazer o corte.
-3. **Deploy do Postgres — passo obrigatório, ainda não executado:** dev usa
-   Postgres local via Docker (Fase 3a); produção vai usar o Postgres do
-   Railway, que está vazio — **duas** migrações pendentes lá (`init` e
-   `add_course_session_slugs`), nenhuma aplicada ainda. Antes de trocar o
+1. **Fase 4c — Deploy no Railway, ainda não executado.** Dev usa Postgres
+   local via Docker (Fase 3a); produção vai usar o Postgres do Railway, que
+   está vazio — **três** migrações pendentes lá (`init`,
+   `add_course_session_slugs`, e a que a Fase 3c/5 possam ter gerado desde
+   então — checar `prisma/migrations/` antes). Antes de trocar o
    `DATABASE_URL` de produção, rodar `npx prisma migrate deploy` (não
-   `migrate dev`) com o `DATABASE_URL` apontando para o Railway.
+   `migrate dev`) com o `DATABASE_URL` apontando para o Railway. Inclui o
+   corte real Vercel → Railway.
+2. **Número de tentativas do retry do Gemini (Fase 5i)** — perguntado ao
+   Douglas se sobe de 3 pra 5 (padrão do SDK), já que o usuário não fica
+   mais bloqueado esperando; sem resposta ainda, fica como decisão em
+   aberto, não bloqueante.
 
 > Resolvido: host confirmado como Railway (05/09/2026). Lista de palavras
 > reservadas para slug de space definida em `src/db/reservedSlugs.ts` (Fase
 > 3b). Transcrição persistida como `full_transcript` (Fase 2). Course/Session
-> ganharam slug próprio, não usam cuid cru na URL (Fase 3c).
+> ganharam slug próprio, não usam cuid cru na URL (Fase 3c). Modelo Gemini
+> trocado de `gemini-3.8-flash` pra `gemini-3.6-flash` pra reduzir 503 de
+> alta demanda (Fase 5h) — confirmado funcionando com jobs reais.
