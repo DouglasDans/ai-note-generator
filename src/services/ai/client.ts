@@ -10,15 +10,15 @@ export function createGenAIClient(): GenAIClient {
   return new GoogleGenAI({
     apiKey,
     // 503 UNAVAILABLE ("high demand") é recomendado pela própria doc do
-    // Gemini como retryable com backoff — já visto acontecer 2x seguidas
-    // em verificação manual. httpStatusCodes não precisa ser
+    // Gemini como retryable com backoff. httpStatusCodes não precisa ser
     // especificado: o padrão do SDK já cobre 408/429/5xx, o que inclui
-    // 503. attempts=3 (tentativa original + 2 retries) mantém o job em
-    // background por no máximo ~90s a mais antes de desistir — aceitável
-    // porque o usuário não fica mais bloqueado esperando isso na tela.
+    // 503. attempts=5 (padrão do próprio SDK) em vez de 3: como o usuário
+    // não fica mais bloqueado esperando isso na tela (Fase 5i), dá pra
+    // gastar mais tentativas em troca de mais chance de sucesso — o
+    // custo é só tempo em background, não UX.
     httpOptions: {
       retryOptions: {
-        attempts: 3,
+        attempts: 5,
         initialDelay: 30,
         maxDelay: 120,
       },

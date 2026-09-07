@@ -3,10 +3,9 @@
 > Documento de trabalho. Registra as decisões tomadas, o motivo delas e a ordem
 > de execução. Atualizar a cada fase concluída.
 >
-> Última atualização: 06/09/2026 · Fases 0, 1, 2 e 3 (3a, 3b, 3c) concluídas ·
-> Fase 4a e 4b concluídas · Fase 4.5 (upgrade Next.js 16), 4.6 (auditoria de
-> segurança) e 5 (5a-5d, interface shadcn/ui) concluídas · Fase 4c (deploy
-> Railway) pendente
+> Última atualização: 07/09/2026 · Fases 0 a 4 (4a, 4b, 4c — deploy em
+> https://ainote.douglasdans.dev/), 4.5 a 4.6 e 5 (5a-5j, interface
+> shadcn/ui + UX de upload) concluídas. Sem itens bloqueantes em aberto.
 
 ---
 
@@ -1062,22 +1061,15 @@ job criado em `aaa` aparece no indicador de `aaa`, space
 
 ## 8. Pontos em aberto
 
-1. **Fase 4c — Deploy no Railway, ainda não executado.** Dev usa Postgres
-   local via Docker (Fase 3a); produção vai usar o Postgres do Railway, que
-   está vazio — **três** migrações pendentes lá (`init`,
-   `add_course_session_slugs`, e a que a Fase 3c/5 possam ter gerado desde
-   então — checar `prisma/migrations/` antes). Antes de trocar o
-   `DATABASE_URL` de produção, rodar `npx prisma migrate deploy` (não
-   `migrate dev`) com o `DATABASE_URL` apontando para o Railway. Inclui o
-   corte real Vercel → Railway.
-2. **Número de tentativas do retry do Gemini (Fase 5i)** — perguntado ao
-   Douglas se sobe de 3 pra 5 (padrão do SDK), já que o usuário não fica
-   mais bloqueado esperando; sem resposta ainda, fica como decisão em
-   aberto, não bloqueante.
+Nenhum item bloqueante conhecido no momento — ver "Resolvido" abaixo pro
+que fechou recentemente.
 
 > Resolvido: host confirmado como Railway (05/09/2026). Lista de palavras
 > reservadas para slug de space definida em `src/db/reservedSlugs.ts` (Fase
 > 3b). Transcrição persistida como `full_transcript` (Fase 2). Course/Session
 > ganharam slug próprio, não usam cuid cru na URL (Fase 3c). Modelo Gemini
 > trocado de `gemini-3.8-flash` pra `gemini-3.6-flash` pra reduzir 503 de
-> alta demanda (Fase 5h) — confirmado funcionando com jobs reais.
+> alta demanda (Fase 5h) — confirmado funcionando com jobs reais. Retry do
+> Gemini subiu de 3 pra 5 tentativas (padrão do SDK), aprovado pelo
+> Douglas (07/09/2026). **Fase 4c (deploy) concluída** — em produção em
+> https://ainote.douglasdans.dev/.
