@@ -67,7 +67,7 @@ describe("generateCourseExtraction", () => {
 
     expect(generateContent).toHaveBeenCalledTimes(1);
     const call = generateContent.mock.calls[0][0];
-    expect(call.model).toBe("gemini-3.8-flash");
+    expect(call.model).toBe("gemini-3.6-flash");
     expect(call.config.responseMimeType).toBe("application/json");
     expect(call.config.responseSchema).toBe(COURSE_EXTRACTION_RESPONSE_SCHEMA);
     expect(call.config.systemInstruction).toContain("2026-03-10");

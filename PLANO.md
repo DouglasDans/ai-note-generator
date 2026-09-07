@@ -934,6 +934,38 @@ próximas entregas + disciplinas).
 (selecionar "Banco de Dados II" preenche "Profa. Ana Souza" sozinho no
 campo de professor).
 
+### Fase 5h — Troca de modelo pra reduzir 503 ✅ CONCLUÍDA
+
+Motivada pelos dois 503 "high demand" seguidos na verificação manual da
+5f/5g. Pesquisado antes de agir, não assumido:
+
+- **Pagar não ajuda:** confirmado em fóruns e docs oficiais do Google que
+  503 é falta de capacidade computacional, não relacionado a cobrança —
+  afeta tier pago e gratuito igualmente. O que tier pago melhora é limite
+  de requisição por minuto (429), problema diferente.
+- **Trocar de provedor não é opção pra essa demanda:** confirmado que a
+  API do Claude não aceita áudio como entrada (só texto e imagem, até
+  set/2026). OpenAI aceitaria, mas trocar de provedor exigiria reescrever
+  schema, prompt e chamada da API do zero, sem garantia de mais
+  estabilidade — 503 é problema de capacidade que qualquer provedor tem.
+- **Trocar de modelo dentro do próprio Gemini, sim:** `gemini-3.8-flash`
+  é descrito na doc oficial como "o modelo estável mais novo" — o mais
+  concentrado em demanda no momento. Testado com chamada real à API
+  (não assumido): `gemini-3.5-flash`, `3.6-flash` e `3.7-flash` também
+  aceitam áudio normalmente (`modality: AUDIO` no `usageMetadata` da
+  resposta), todos sem data de desligamento anunciada.
+- **Escolhido `gemini-3.6-flash`**: uma geração atrás do mais hypado,
+  reduz a concorrência por capacidade sem abrir mão de um modelo recente.
+  Não é garantia total — 503 pode afetar qualquer modelo — mas é uma
+  mudança de uma linha, sem custo, que reduz a chance.
+- **Retry com backoff continua pendente** — decidido fazer só a troca de
+  modelo por enquanto; o retry foi combinado pra próxima rodada, junto
+  com a mudança de não bloquear o usuário durante o processamento.
+
+**Gate:** build/test(63/63)/lint limpos. `GEMINI_MODEL` e o teste que
+verifica a chamada (`generateCourseExtraction.test.ts`) atualizados
+juntos.
+
 ---
 
 ## 7. Adiado (não é para agora)

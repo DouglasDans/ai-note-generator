@@ -10,7 +10,11 @@ import { buildSystemInstruction } from "./prompt.ts";
 import { parseCourseExtractionResponse } from "./parseCourseExtractionResponse.ts";
 import type { Course, CourseExtractionResult } from "./types.ts";
 
-const GEMINI_MODEL = "gemini-3.8-flash";
+// gemini-3.6-flash em vez do 3.8 (o mais novo): aceita áudio igual
+// (confirmado com chamada real à API, não assumido), mas sofre menos com
+// 503 "high demand" — o modelo mais novo concentra a maior parte da
+// demanda no momento do lançamento. Sem data de desligamento anunciada.
+const GEMINI_MODEL = "gemini-3.6-flash";
 const PROMPT_VERSION = "3.0";
 const PROMPT_TEMPLATE_PATH = path.join(process.cwd(), "src/prompts/prompt.md");
 
