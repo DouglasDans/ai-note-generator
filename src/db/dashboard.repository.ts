@@ -2,6 +2,7 @@ import { prisma } from "@/db/client";
 
 export type UpcomingItem = {
   id: string;
+  kind: "task" | "mentionedDate";
   description: string;
   dateIso: Date;
   sessionId: string;
@@ -41,6 +42,7 @@ export async function listUpcomingItemsBySpace(
   const items: UpcomingItem[] = [
     ...taskItems.map((item) => ({
       id: item.id,
+      kind: "task" as const,
       description: `${item.title}: ${item.description}`,
       dateIso: item.dueDateIso as Date,
       sessionId: item.sessionId,
@@ -52,6 +54,7 @@ export async function listUpcomingItemsBySpace(
     })),
     ...mentionedDates.map((item) => ({
       id: item.id,
+      kind: "mentionedDate" as const,
       description: item.description,
       dateIso: item.dateIso as Date,
       sessionId: item.sessionId,
@@ -64,13 +67,4 @@ export async function listUpcomingItemsBySpace(
   ];
 
   return items.sort((a, b) => a.dateIso.getTime() - b.dateIso.getTime());
-}
-
-export async function listRecentSessionsBySpace(spaceId: string, limit = 5) {
-  return prisma.session.findMany({
-    where: { course: { spaceId } },
-    include: { course: true },
-    orderBy: [{ recordingDate: "desc" }, { createdAt: "desc" }],
-    take: limit,
-  });
 }

@@ -2,10 +2,7 @@ import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "@/db/client";
 import { createSpace } from "@/db/space.repository";
 import { persistCourseExtraction } from "@/db/course.repository";
-import {
-  listRecentSessionsBySpace,
-  listUpcomingItemsBySpace,
-} from "@/db/dashboard.repository";
+import { listUpcomingItemsBySpace } from "@/db/dashboard.repository";
 import type { CourseExtractionResult } from "@/services/ai/types";
 
 beforeEach(async () => {
@@ -84,6 +81,7 @@ describe("listUpcomingItemsBySpace", () => {
       "2026-06-05",
       "2026-06-10",
     ]);
+    expect(items.map((i) => i.kind)).toEqual(["mentionedDate", "task"]);
   });
 
   it("exclui itens sem data ISO (não dá pra saber se são futuros)", async () => {
@@ -192,50 +190,3 @@ describe("listUpcomingItemsBySpace", () => {
   });
 });
 
-describe("listRecentSessionsBySpace", () => {
-  it("retorna as sessions mais recentes do space, mais nova primeiro", async () => {
-    const space = await createSpace("fatec-gestao-2026");
-
-    await persistCourseExtraction(
-      space.id,
-      extraction({ sessionTitle: "Aula antiga", recordingDate: "2026-01-01" })
-    );
-    await persistCourseExtraction(
-      space.id,
-      extraction({ sessionTitle: "Aula nova", recordingDate: "2026-05-01" })
-    );
-
-    const sessions = await listRecentSessionsBySpace(space.id);
-
-    expect(sessions.map((s) => s.title)).toEqual(["Aula nova", "Aula antiga"]);
-  });
-
-  it("limita ao número pedido", async () => {
-    const space = await createSpace("fatec-gestao-2026");
-
-    for (let i = 1; i <= 3; i++) {
-      await persistCourseExtraction(
-        space.id,
-        extraction({ sessionTitle: `Aula ${i}`, recordingDate: `2026-0${i}-01` })
-      );
-    }
-
-    const sessions = await listRecentSessionsBySpace(space.id, 2);
-
-    expect(sessions).toHaveLength(2);
-  });
-
-  it("não vaza sessions de outro space", async () => {
-    const spaceA = await createSpace("space-a");
-    const spaceB = await createSpace("space-b");
-
-    await persistCourseExtraction(
-      spaceA.id,
-      extraction({ sessionTitle: "Aula 1", recordingDate: "2026-05-01" })
-    );
-
-    const sessions = await listRecentSessionsBySpace(spaceB.id);
-
-    expect(sessions).toHaveLength(0);
-  });
-});

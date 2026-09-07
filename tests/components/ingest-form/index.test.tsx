@@ -47,11 +47,11 @@ describe("IngestForm", () => {
   });
 
   it("renderiza os campos esperados", () => {
-    render(<IngestForm spaceSlug="fatec-2026" />);
+    render(<IngestForm spaceSlug="fatec-2026" disciplines={[]} />);
 
     expect(screen.getByLabelText(/áudio/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/data da grava/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/curso/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/disciplina/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/professor/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /enviar/i })).toBeInTheDocument();
   });
@@ -62,7 +62,7 @@ describe("IngestForm", () => {
     fetchMock.mockResolvedValueOnce(jsonResponse({ jobId: "job-1" }, 202));
     fetchMock.mockResolvedValueOnce(jsonResponse({ status: "processing" }));
 
-    render(<IngestForm spaceSlug="fatec-2026" />);
+    render(<IngestForm spaceSlug="fatec-2026" disciplines={[]} />);
     await fillAndSubmit(user);
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
@@ -93,7 +93,7 @@ describe("IngestForm", () => {
     fetchMock.mockResolvedValueOnce(jsonResponse({ jobId: "job-1" }, 202));
     fetchMock.mockResolvedValueOnce(jsonResponse({ status: "done" }));
 
-    render(<IngestForm spaceSlug="fatec-2026" />);
+    render(<IngestForm spaceSlug="fatec-2026" disciplines={[]} />);
     await fillAndSubmit(user);
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
 
@@ -114,7 +114,7 @@ describe("IngestForm", () => {
       jsonResponse({ status: "error", errorMessage: "Falha ao processar áudio." })
     );
 
-    render(<IngestForm spaceSlug="fatec-2026" />);
+    render(<IngestForm spaceSlug="fatec-2026" disciplines={[]} />);
     await fillAndSubmit(user);
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
 
@@ -132,7 +132,7 @@ describe("IngestForm", () => {
       jsonResponse({ error: "Space não encontrado." }, 404)
     );
 
-    render(<IngestForm spaceSlug="fatec-2026" />);
+    render(<IngestForm spaceSlug="fatec-2026" disciplines={[]} />);
     await fillAndSubmit(user);
 
     await waitFor(() =>

@@ -2,9 +2,10 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { findSpaceBySlug } from "@/db/space.repository";
 import { listCoursesBySpace } from "@/db/course.repository";
-import { listRecentSessionsBySpace, listUpcomingItemsBySpace } from "@/db/dashboard.repository";
+import { listUpcomingItemsBySpace } from "@/db/dashboard.repository";
 import IngestForm from "@/components/ingest-form";
 import { formatDateOnly } from "@/lib/formatDate";
+import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 type Props = {
@@ -17,10 +18,9 @@ export default async function SpacePage({ params }: Props) {
   const space = await findSpaceBySlug(spaceSlug);
   if (!space) notFound();
 
-  const [courses, upcomingItems, recentSessions] = await Promise.all([
+  const [courses, upcomingItems] = await Promise.all([
     listCoursesBySpace(space.id),
     listUpcomingItemsBySpace(space.id),
-    listRecentSessionsBySpace(space.id),
   ]);
 
   return (
@@ -32,7 +32,10 @@ export default async function SpacePage({ params }: Props) {
           <CardTitle>Enviar nova aula</CardTitle>
         </CardHeader>
         <CardContent>
-          <IngestForm spaceSlug={space.slug} />
+          <IngestForm
+            spaceSlug={space.slug}
+            disciplines={courses.map((course) => course.name)}
+          />
         </CardContent>
       </Card>
 
@@ -46,7 +49,12 @@ export default async function SpacePage({ params }: Props) {
               <li key={item.id} className="text-sm">
                 <Link
                   href={`/${space.slug}/${item.courseSlug}/${item.sessionSlug}`}
-                  className="hover:underline"
+                  className={cn(
+                    "font-medium hover:underline",
+                    item.kind === "task"
+                      ? "text-red-600 dark:text-red-400"
+                      : "text-amber-600 dark:text-amber-400"
+                  )}
                 >
                   {item.description}
                 </Link>{" "}
@@ -60,33 +68,10 @@ export default async function SpacePage({ params }: Props) {
       </div>
 
       <div className="flex flex-col gap-3">
-        <h2 className="text-lg font-medium">Destaques recentes</h2>
-        {recentSessions.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nenhuma aula registrada ainda.</p>
-        ) : (
-          <ul className="flex flex-col gap-1.5">
-            {recentSessions.map((session) => (
-              <li key={session.id} className="text-sm">
-                <Link
-                  href={`/${space.slug}/${session.course.slug}/${session.slug}`}
-                  className="hover:underline"
-                >
-                  {session.title}
-                </Link>{" "}
-                <span className="text-muted-foreground">
-                  — {formatDateOnly(session.recordingDate)} ({session.course.name})
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-
-      <div className="flex flex-col gap-3">
-        <h2 className="text-lg font-medium">Cursos</h2>
+        <h2 className="text-lg font-medium">Disciplinas</h2>
         {courses.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            Nenhum curso registrado ainda neste espaço.
+            Nenhuma disciplina registrada ainda neste espaço.
           </p>
         ) : (
           <div className="flex flex-col gap-2">

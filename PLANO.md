@@ -821,6 +821,60 @@ ui.shadcn.com/docs/{cli,react-19,dark-mode/next,theming}.
 **DoD:** nenhuma dependência de MUI/Emotion no `package.json`; dashboard
 mostrando próximas provas ordenadas.
 
+### Fase 5e — Correções de UX após verificação manual do Douglas ✅ CONCLUÍDA
+
+Rodada de feedback depois de navegar pela UI de verdade (space `aaa` com
+dado semeado) — não estava no plano original da 5a-5d, mas mudanças
+pequenas e diretamente ligadas ao que acabou de ser construído.
+
+- **Terminologia "Curso"→"Disciplina" na interface.** Só o texto exibido —
+  `course` continua sendo o nome interno no código/schema/rotas (decisão
+  4.6 de nomenclatura neutra segue valendo, era especificamente sobre
+  código e URLs).
+- **Cores dos cards de tarefas/datas restauradas**, verificado no
+  histórico do git da v1 (não confiado na memória — que se contradisse
+  entre vermelho/amarelo/azul na conversa): `tarefas_futuras` era
+  `color="danger"` (vermelho) no MUI Joy, `datas_futuras_mencionadas` era
+  `color="warning"` (amarelo), não azul. Na página da sessão viram cards
+  de verdade (`bg-red-50`/`bg-amber-50` com variante dark); no dashboard
+  (`/[space]`) a mesma paleta aparece como texto colorido, não card cheio
+  — cards pesariam visualmente ali por poder acumular itens de várias
+  disciplinas ao mesmo tempo.
+- **"Destaques recentes" removido** do dashboard — não fazia sentido pro
+  Douglas listar título de aula; o que importa ali é só o que está por
+  vir. `listRecentSessionsBySpace` e seus 3 testes foram removidos junto
+  (código morto).
+- **Campo de disciplina no upload virou combobox** (`src/components/
+  discipline-combobox/`, shadcn `Command`+`Popover`): sugere as
+  disciplinas já existentes nesse space enquanto digita — pra evitar
+  duplicar por nome diferente ("Banco de Dados II" vs "Banco de Dados
+  2") — mas digitar um nome que não existe ainda continua criando
+  disciplina nova (mesmo comportamento do campo de texto livre anterior,
+  decisão explícita do Douglas: não travar em lista fechada).
+- **Navbar sabe em que space está** (`usePathname()` + `isReservedSlug`):
+  o botão "Home" dentro de um space aponta pro space (`/[space]`), não
+  pra raiz — evita sair sem querer. Botão "Sair" novo, só aparece dentro
+  de um space, leva pra `/`.
+- **Achado à parte, não de UI:** durante a verificação manual (áudio
+  curto real, com `GEMINI_API_KEY` configurada), o pipeline bateu 503
+  "UNAVAILABLE — high demand" do próprio Gemini duas vezes seguidas —
+  confirmado pela doc oficial que é comportamento conhecido e recomendado
+  tratar com retry exponencial no cliente HTTP do SDK (`@google/genai`
+  expõe `HttpRetryOptions` nativo pra isso). **Ainda não implementado** —
+  investigação foi interrompida pela rodada de feedback de UX acima; fica
+  registrado como próximo item.
+- **Também corrigido nessa rodada, achado ao mostrar o 503 pro Douglas:**
+  `GET /api/[space]/ingest/[jobId]` devolvia o erro técnico bruto da SDK
+  (JSON cru) direto pro `errorMessage` que o `ingest-form` mostra na
+  tela. Motivo do Douglas: "isso não pode acontecer pro user". Corrigido
+  para uma mensagem genérica no endpoint — o erro técnico continua
+  gravado no banco (`ingestion_jobs.error_message`) pra debug, só não
+  vaza mais pra quem está usando o sistema.
+
+**Gate:** build/test(62/62)/lint limpos, verificado no navegador (combobox
+abre e sugere/cria, cards coloridos nas duas telas, Home/Sair navegando
+certo).
+
 ---
 
 ## 7. Adiado (não é para agora)

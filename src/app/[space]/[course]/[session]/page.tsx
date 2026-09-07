@@ -4,6 +4,7 @@ import { findSpaceBySlug } from "@/db/space.repository";
 import { getCourseBySlug, getSessionBySlug } from "@/db/course.repository";
 import { formatDateOnly } from "@/lib/formatDate";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
 type Props = {
@@ -36,30 +37,40 @@ export default async function SessionPage({ params }: Props) {
         <section className="flex flex-col gap-2">
           <h2 className="text-lg font-medium">Tarefas futuras</h2>
           <p className="text-sm text-muted-foreground">{session.futureTasksOverview}</p>
-          <ul className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-2">
             {session.taskItems.map((item) => (
-              <li key={item.id} className="text-sm">
-                <strong>{item.title}</strong>: {item.description} —{" "}
-                {item.dueDateIso
-                  ? formatDateOnly(item.dueDateIso)
-                  : item.dueDateOriginalText}
-              </li>
+              <Card
+                key={item.id}
+                className="border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/40"
+              >
+                <CardContent className="text-sm text-red-900 dark:text-red-100">
+                  <strong>{item.title}</strong>: {item.description} —{" "}
+                  {item.dueDateIso
+                    ? formatDateOnly(item.dueDateIso)
+                    : item.dueDateOriginalText}
+                </CardContent>
+              </Card>
             ))}
-          </ul>
+          </div>
         </section>
       )}
 
       {session.mentionedDates.length > 0 && (
         <section className="flex flex-col gap-2">
           <h2 className="text-lg font-medium">Datas mencionadas</h2>
-          <ul className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-2">
             {session.mentionedDates.map((item) => (
-              <li key={item.id} className="text-sm">
-                {item.description} —{" "}
-                {item.dateIso ? formatDateOnly(item.dateIso) : item.originalText}
-              </li>
+              <Card
+                key={item.id}
+                className="border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/40"
+              >
+                <CardContent className="text-sm text-amber-900 dark:text-amber-100">
+                  {item.description} —{" "}
+                  {item.dateIso ? formatDateOnly(item.dateIso) : item.originalText}
+                </CardContent>
+              </Card>
             ))}
-          </ul>
+          </div>
         </section>
       )}
 

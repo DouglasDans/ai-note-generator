@@ -5,16 +5,18 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import DisciplineCombobox from "@/components/discipline-combobox";
 
 type Props = {
   spaceSlug: string;
+  disciplines: string[];
 };
 
 type IngestJobStatus = "pending" | "processing" | "done" | "error";
 
 const POLL_INTERVAL_MS = 2000;
 
-export default function IngestForm({ spaceSlug }: Props) {
+export default function IngestForm({ spaceSlug, disciplines }: Props) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -88,8 +90,13 @@ export default function IngestForm({ spaceSlug }: Props) {
       </div>
 
       <div className="grid gap-1.5">
-        <Label htmlFor="courseName">Curso (opcional)</Label>
-        <Input id="courseName" name="courseName" type="text" disabled={isSubmitting} />
+        <Label htmlFor="courseName">Disciplina (opcional)</Label>
+        <DisciplineCombobox
+          id="courseName"
+          name="courseName"
+          disciplines={disciplines}
+          disabled={isSubmitting}
+        />
       </div>
 
       <div className="grid gap-1.5">
