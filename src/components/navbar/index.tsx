@@ -32,7 +32,7 @@ export default function Navbar() {
         )}
       </div>
       <div className="flex items-center gap-2">
-        <IngestionJobsIndicator />
+        <IngestionJobsIndicator spaceSlug={spaceSlug} />
         <ThemeToggle />
       </div>
     </nav>

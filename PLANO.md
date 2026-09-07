@@ -1020,6 +1020,32 @@ sem travar a tela.
 job real (sucesso e timeout de retry), indicador sobrevivendo a troca
 de tela, dashboard atualizando sozinho.
 
+### Fase 5j — Indicador de processamento vazava entre spaces ✅ CONCLUÍDA
+
+Achado do Douglas na verificação manual: o indicador de processamento
+(5i) ficou no navbar global e passou a mostrar job de qualquer space,
+não só do que está sendo visto — quebra o isolamento entre "turmas" que
+o resto do projeto segue (decisão 4.1).
+
+- `IngestionJobsProvider` continua global (necessário pra sobreviver à
+  troca de tela — não mudou). O que mudou foi só a exibição:
+  `IngestionJobsIndicator` agora recebe `spaceSlug` do `Navbar` (mesma
+  lógica de `usePathname()` + `isReservedSlug` já usada ali pro botão
+  Home/Sair) e filtra `jobs` pra só mostrar os do space atual. Fora de
+  um space (`spaceSlug` nulo), não mostra nada.
+- **TDD:** teste novo garantindo que job criado com `spaceSlug="fatec-2026"`
+  não aparece num indicador renderizado com `spaceSlug="outro-space"`.
+- **Achado de teste, à parte:** o teste novo deixou um `setInterval` de
+  polling correndo sem mock pra segunda chamada (`GET status`), gerando
+  unhandled rejection (`fetch` mockado só uma vez, intervalo chamava de
+  novo). Corrigido com `mockResolvedValue` (sem `Once`) cobrindo
+  chamadas subsequentes — mesmo padrão que os outros testes de polling
+  já usavam, só não copiado na primeira versão deste teste.
+
+**Gate:** build/test(67/67)/lint limpos, verificado no navegador:
+job criado em `aaa` aparece no indicador de `aaa`, space
+`ingest-4b-teste` não mostra nada.
+
 ---
 
 ## 7. Adiado (não é para agora)

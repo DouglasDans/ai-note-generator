@@ -20,13 +20,21 @@ const STATUS_LABEL: Record<IngestionJob["status"], string> = {
   error: "Falhou",
 };
 
-// Fica no navbar (fora de qualquer página específica) de propósito: o
-// job continua em background mesmo que o usuário troque de tela, então o
-// indicador precisa aparecer em qualquer lugar do app, não só na página do
-// space onde o upload começou.
-export default function IngestionJobsIndicator() {
-  const { jobs } = useIngestionJobs();
+type Props = {
+  spaceSlug: string | null;
+};
 
+// Rastreamento fica no IngestionJobsProvider (global, sobrevive a troca de
+// tela — ver Fase 5i), mas o que aparece aqui é filtrado pro space atual:
+// mostrar job de outro space vazaria informação entre "turmas", quebrando o
+// isolamento que o resto do projeto segue (decisão 4.1, PLANO.md). Fora de
+// um space não há o que mostrar.
+export default function IngestionJobsIndicator({ spaceSlug }: Props) {
+  const { jobs: allJobs } = useIngestionJobs();
+
+  if (!spaceSlug) return null;
+
+  const jobs = allJobs.filter((job) => job.spaceSlug === spaceSlug);
   if (jobs.length === 0) return null;
 
   const activeCount = jobs.filter(
@@ -72,7 +80,6 @@ export default function IngestionJobsIndicator() {
                 <Loader2 className="size-3.5 animate-spin" />
               )}
               {STATUS_LABEL[job.status]}
-              <span className="text-muted-foreground">— {job.spaceSlug}</span>
             </span>
             {job.status === "error" && job.errorMessage && (
               <span className="text-xs text-muted-foreground">{job.errorMessage}</span>

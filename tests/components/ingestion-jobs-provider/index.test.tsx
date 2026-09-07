@@ -33,7 +33,7 @@ function jsonResponse(body: unknown, status = 200) {
 function renderApp() {
   return render(
     <IngestionJobsProvider>
-      <IngestionJobsIndicator />
+      <IngestionJobsIndicator spaceSlug="fatec-2026" />
       <UploadSessionDialog spaceSlug="fatec-2026" courses={[]} />
     </IngestionJobsProvider>
   );
@@ -69,6 +69,28 @@ describe("IngestionJobsProvider", () => {
   it("não mostra o indicador antes de qualquer upload", () => {
     renderApp();
 
+    expect(
+      screen.queryByRole("button", { name: /processamento de aulas/i })
+    ).not.toBeInTheDocument();
+  });
+
+  it("não mostra o job de um space no indicador de outro space", async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const fetchMock = vi.mocked(fetch);
+    fetchMock.mockResolvedValueOnce(jsonResponse({ jobId: "job-1" }, 202));
+    fetchMock.mockResolvedValue(jsonResponse({ status: "processing" }));
+
+    render(
+      <IngestionJobsProvider>
+        <IngestionJobsIndicator spaceSlug="outro-space" />
+        <UploadSessionDialog spaceSlug="fatec-2026" courses={[]} />
+      </IngestionJobsProvider>
+    );
+    await openDialogAndSubmit(user);
+
+    // dá tempo do job entrar no estado global antes de afirmar que o
+    // indicador do space errado continua sem nada
+    await vi.advanceTimersByTimeAsync(2000);
     expect(
       screen.queryByRole("button", { name: /processamento de aulas/i })
     ).not.toBeInTheDocument();
