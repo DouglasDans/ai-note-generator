@@ -674,11 +674,32 @@ formalmente atualizadas pra React 19. Dark mode: caminho oficial é
 Fontes: tailwindcss.com/docs/installation/framework-guides/nextjs,
 ui.shadcn.com/docs/{cli,react-19,dark-mode/next,theming}.
 
-- **5a — Setup:** `tailwindcss` + `@tailwindcss/postcss` + `postcss`,
-  `postcss.config.mjs`; `globals.scss` → `globals.css` (conteúdo já é CSS
-  puro, sem sintaxe Sass — troca de extensão, sem reescrita); `npx
-  shadcn@latest init` (tema neutro). Sem mudança visual — nada ainda
-  consome Tailwind. **Gate:** build/test/lint limpos, tela idêntica a hoje.
+- **5a — Setup ✅ CONCLUÍDA:** `tailwindcss` + `@tailwindcss/postcss` +
+  `postcss`, `postcss.config.mjs`; `globals.scss` → `globals.css`
+  (conteúdo já era CSS puro, sem sintaxe Sass — troca de extensão, sem
+  reescrita) com `@import "tailwindcss";` adicionado no topo (exigido
+  pelo CLI do shadcn pra detectar Tailwind v4 antes de rodar).
+  - **CLI do shadcn mudou de forma desde a pesquisa de 06/09:** não existe
+    mais flag de cor-base (`neutral`/`zinc`/...); a v4.21.0 pede um
+    **preset** de estilo (`Nova`, `Vega`, `Maia`, `Lyra`, `Mira`, `Luma`,
+    `Sera`, `Rhea`) e uma base de componente headless (`radix`, `base`,
+    `aria`). Pesquisado antes de escolher (não assumido): `Nova` é o novo
+    padrão do CLI (`--defaults`), com espaçamento reduzido; `Vega` é
+    descrito na documentação do próprio shadcn como "o visual clássico do
+    shadcn/ui". Escolhido **Vega + radix** por ser a leitura mais literal
+    da decisão de 06/09 ("tema neutro padrão, sem identidade
+    customizada") — é o que a maioria reconhece como "a cara do shadcn",
+    não um redesign novo do CLI. `radix` por ser a base mais madura/
+    documentada do ecossistema.
+  - Gerado: `components.json`, `src/lib/utils.ts`,
+    `src/components/ui/button.tsx`, variáveis de tema (oklch, claro/escuro)
+    em `globals.css`. Fonte trocada para Inter (`next/font/google`) em
+    `layout.tsx`, mas MUI Joy/Emotion **não foram tocados** — coexistem
+    até a 5b.
+  - **Gate:** build/test/lint limpos (mesmo erro de lint da Fase 4.5,
+    ainda adiado pra 5b — nada novo), verificado visualmente via
+    screenshot que a home segue idêntica (nada consome Tailwind/shadcn na
+    página ainda).
 - **5b — Casca:** `next-themes` substitui `theme-registry.tsx`; `navbar` e
   `theme-toggle` reconstruídos com shadcn `Button` + `useTheme()`; deleta
   `src/theme/`; remove `@mui/joy` + `@emotion/*` do `package.json`.
