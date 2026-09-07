@@ -3,10 +3,10 @@ import Link from "next/link";
 import { findSpaceBySlug } from "@/db/space.repository";
 import { listCoursesBySpace } from "@/db/course.repository";
 import { listUpcomingItemsBySpace } from "@/db/dashboard.repository";
-import IngestForm from "@/components/ingest-form";
+import UploadSessionDialog from "@/components/upload-session-dialog";
 import { formatDateOnly } from "@/lib/formatDate";
 import { cn } from "@/lib/utils";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 
 type Props = {
   params: Promise<{ space: string }>;
@@ -25,19 +25,13 @@ export default async function SpacePage({ params }: Props) {
 
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-8">
-      <h1 className="text-2xl font-semibold">{space.slug}</h1>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Enviar nova aula</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <IngestForm
-            spaceSlug={space.slug}
-            disciplines={courses.map((course) => course.name)}
-          />
-        </CardContent>
-      </Card>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">{space.slug}</h1>
+        <UploadSessionDialog
+          spaceSlug={space.slug}
+          disciplines={courses.map((course) => course.name)}
+        />
+      </div>
 
       <div className="flex flex-col gap-3">
         <h2 className="text-lg font-medium">Próximas provas e entregas</h2>

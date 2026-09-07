@@ -10,13 +10,14 @@ import DisciplineCombobox from "@/components/discipline-combobox";
 type Props = {
   spaceSlug: string;
   disciplines: string[];
+  onDone?: () => void;
 };
 
 type IngestJobStatus = "pending" | "processing" | "done" | "error";
 
 const POLL_INTERVAL_MS = 2000;
 
-export default function IngestForm({ spaceSlug, disciplines }: Props) {
+export default function IngestForm({ spaceSlug, disciplines, onDone }: Props) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -44,6 +45,7 @@ export default function IngestForm({ spaceSlug, disciplines }: Props) {
 
       if (data.status === "done") {
         stopPolling();
+        onDone?.();
         router.push(`/${spaceSlug}`);
         router.refresh();
       } else if (data.status === "error") {

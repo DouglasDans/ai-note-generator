@@ -875,6 +875,35 @@ pequenas e diretamente ligadas ao que acabou de ser construído.
 abre e sugere/cria, cards coloridos nas duas telas, Home/Sair navegando
 certo).
 
+### Fase 5f — Enviar aula vira modal, não card sempre visível ✅ CONCLUÍDA
+
+Segunda rodada de feedback: `/[space]` acumulava tudo visível de uma vez
+(form de upload sempre aberto + próximas entregas + disciplinas). Douglas
+pediu pra esconder o form atrás de um botão que abre um "dropdown" —
+interpretado como modal (shadcn `Dialog`), por caber melhor os 4 campos do
+form do que um Popover pequeno.
+
+- `src/components/upload-session-dialog/` novo: botão "Enviar nova aula"
+  no topo da página, abre um `Dialog` com o `IngestForm` dentro. Estado
+  do modal (`open`) fica nesse client component, não na página (que é
+  Server Component).
+- `IngestForm` ganhou prop opcional `onDone?: () => void`, chamada quando
+  o job termina (`status === "done"`) — o modal se fecha sozinho nesse
+  momento, antes do `router.push`/`refresh` que já existiam. Prop opcional
+  pra não forçar todo consumidor do componente a saber que existe modal.
+  Testes do `ingest-form` não mudaram — comportamento sem o prop continua
+  o mesmo, só ganhou um hook extra.
+- Cabeçalho do space (`space.slug`) mantido como estava — a fala do
+  Douglas sobre "nome da turma/nome da sessão" foi ambígua e se
+  autocorrigiu na própria mensagem; interpretado como confirmação de que
+  o nome já exibido (o slug) é o que deveria continuar como título
+  principal, não um campo novo. Sinalizado a ele pra corrigir se a leitura
+  estiver errada.
+
+**Gate:** build/test(62/62)/lint limpos, verificado no navegador (botão
+abre o modal com os 4 campos, título principal da página ficou só nome +
+próximas entregas + disciplinas).
+
 ---
 
 ## 7. Adiado (não é para agora)
