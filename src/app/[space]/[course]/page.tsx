@@ -3,6 +3,7 @@ import Link from "next/link";
 import { findSpaceBySlug } from "@/db/space.repository";
 import { getCourseBySlug } from "@/db/course.repository";
 import { formatDateOnly } from "@/lib/formatDate";
+import { Card, CardContent } from "@/components/ui/card";
 
 type Props = {
   params: Promise<{ space: string; course: string }>;
@@ -18,21 +19,29 @@ export default async function CoursePage({ params }: Props) {
   if (!course) notFound();
 
   return (
-    <main>
-      <h1>{course.name}</h1>
-      <p>{course.professor}</p>
+    <main className="mx-auto flex max-w-2xl flex-col gap-6">
+      <div>
+        <h1 className="text-2xl font-semibold">{course.name}</h1>
+        <p className="text-sm text-muted-foreground">{course.professor}</p>
+      </div>
+
       {course.sessions.length === 0 ? (
-        <p>Nenhuma aula registrada ainda.</p>
+        <p className="text-sm text-muted-foreground">Nenhuma aula registrada ainda.</p>
       ) : (
-        <ul>
+        <div className="flex flex-col gap-2">
           {course.sessions.map((session) => (
-            <li key={session.id}>
-              <Link href={`/${space.slug}/${course.slug}/${session.slug}`}>
-                {session.title} — {formatDateOnly(session.recordingDate)}
-              </Link>
-            </li>
+            <Link key={session.id} href={`/${space.slug}/${course.slug}/${session.slug}`}>
+              <Card className="transition-colors hover:bg-muted/50">
+                <CardContent className="flex flex-row items-center justify-between">
+                  <span className="font-medium">{session.title}</span>
+                  <span className="text-sm text-muted-foreground">
+                    {formatDateOnly(session.recordingDate)}
+                  </span>
+                </CardContent>
+              </Card>
+            </Link>
           ))}
-        </ul>
+        </div>
       )}
     </main>
   );

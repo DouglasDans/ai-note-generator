@@ -3,6 +3,8 @@ import { MDXRemote } from "next-mdx-remote/rsc";
 import { findSpaceBySlug } from "@/db/space.repository";
 import { getCourseBySlug, getSessionBySlug } from "@/db/course.repository";
 import { formatDateOnly } from "@/lib/formatDate";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 
 type Props = {
   params: Promise<{ space: string; course: string; session: string }>;
@@ -22,19 +24,21 @@ export default async function SessionPage({ params }: Props) {
   if (!session) notFound();
 
   return (
-    <main>
-      <h1>{session.title}</h1>
-      <p>
-        {course.name} — {formatDateOnly(session.recordingDate)}
-      </p>
+    <main className="mx-auto flex max-w-2xl flex-col gap-6">
+      <div>
+        <h1 className="text-2xl font-semibold">{session.title}</h1>
+        <p className="text-sm text-muted-foreground">
+          {course.name} — {formatDateOnly(session.recordingDate)}
+        </p>
+      </div>
 
       {session.taskItems.length > 0 && (
-        <section>
-          <h2>Tarefas futuras</h2>
-          <p>{session.futureTasksOverview}</p>
-          <ul>
+        <section className="flex flex-col gap-2">
+          <h2 className="text-lg font-medium">Tarefas futuras</h2>
+          <p className="text-sm text-muted-foreground">{session.futureTasksOverview}</p>
+          <ul className="flex flex-col gap-1.5">
             {session.taskItems.map((item) => (
-              <li key={item.id}>
+              <li key={item.id} className="text-sm">
                 <strong>{item.title}</strong>: {item.description} —{" "}
                 {item.dueDateIso
                   ? formatDateOnly(item.dueDateIso)
@@ -46,48 +50,56 @@ export default async function SessionPage({ params }: Props) {
       )}
 
       {session.mentionedDates.length > 0 && (
-        <section>
-          <h2>Datas mencionadas</h2>
-          <ul>
+        <section className="flex flex-col gap-2">
+          <h2 className="text-lg font-medium">Datas mencionadas</h2>
+          <ul className="flex flex-col gap-1.5">
             {session.mentionedDates.map((item) => (
-              <li key={item.id}>
+              <li key={item.id} className="text-sm">
                 {item.description} —{" "}
-                {item.dateIso
-                  ? formatDateOnly(item.dateIso)
-                  : item.originalText}
+                {item.dateIso ? formatDateOnly(item.dateIso) : item.originalText}
               </li>
             ))}
           </ul>
         </section>
       )}
 
-      <section>
-        <h2>Resumo</h2>
-        <MDXRemote source={session.summary} />
+      <Separator />
+
+      <section className="flex flex-col gap-2">
+        <h2 className="text-lg font-medium">Resumo</h2>
+        <div className="prose prose-sm dark:prose-invert max-w-none">
+          <MDXRemote source={session.summary} />
+        </div>
       </section>
 
       {session.classActivities && (
-        <section>
-          <h2>Atividades em aula</h2>
-          <MDXRemote source={session.classActivities} />
+        <section className="flex flex-col gap-2">
+          <h2 className="text-lg font-medium">Atividades em aula</h2>
+          <div className="prose prose-sm dark:prose-invert max-w-none">
+            <MDXRemote source={session.classActivities} />
+          </div>
         </section>
       )}
 
       {session.offTopic && (
-        <section>
-          <h2>Off-topic</h2>
-          <MDXRemote source={session.offTopic} />
+        <section className="flex flex-col gap-2">
+          <h2 className="text-lg font-medium">Off-topic</h2>
+          <div className="prose prose-sm dark:prose-invert max-w-none">
+            <MDXRemote source={session.offTopic} />
+          </div>
         </section>
       )}
 
       {session.tags.length > 0 && (
-        <section>
-          <h2>Tags</h2>
-          <ul>
+        <section className="flex flex-col gap-2">
+          <h2 className="text-lg font-medium">Tags</h2>
+          <div className="flex flex-wrap gap-2">
             {session.tags.map((tag) => (
-              <li key={tag}>{tag}</li>
+              <Badge key={tag} variant="secondary">
+                {tag}
+              </Badge>
             ))}
-          </ul>
+          </div>
         </section>
       )}
     </main>

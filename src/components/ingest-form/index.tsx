@@ -2,7 +2,9 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import styles from "./index.module.scss";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 type Props = {
   spaceSlug: string;
@@ -74,38 +76,36 @@ export default function IngestForm({ spaceSlug }: Props) {
   }
 
   return (
-    <form ref={formRef} className={styles.form} onSubmit={handleSubmit}>
-      <div className={styles.field}>
-        <label htmlFor="audio">Áudio da aula</label>
-        <input id="audio" name="audio" type="file" accept="audio/*" required disabled={isSubmitting} />
+    <form ref={formRef} className="grid gap-4" onSubmit={handleSubmit}>
+      <div className="grid gap-1.5">
+        <Label htmlFor="audio">Áudio da aula</Label>
+        <Input id="audio" name="audio" type="file" accept="audio/*" required disabled={isSubmitting} />
       </div>
 
-      <div className={styles.field}>
-        <label htmlFor="recordingDate">Data da gravação</label>
-        <input
-          id="recordingDate"
-          name="recordingDate"
-          type="date"
-          required
-          disabled={isSubmitting}
-        />
+      <div className="grid gap-1.5">
+        <Label htmlFor="recordingDate">Data da gravação</Label>
+        <Input id="recordingDate" name="recordingDate" type="date" required disabled={isSubmitting} />
       </div>
 
-      <div className={styles.field}>
-        <label htmlFor="courseName">Curso (opcional)</label>
-        <input id="courseName" name="courseName" type="text" disabled={isSubmitting} />
+      <div className="grid gap-1.5">
+        <Label htmlFor="courseName">Curso (opcional)</Label>
+        <Input id="courseName" name="courseName" type="text" disabled={isSubmitting} />
       </div>
 
-      <div className={styles.field}>
-        <label htmlFor="professorName">Professor (opcional)</label>
-        <input id="professorName" name="professorName" type="text" disabled={isSubmitting} />
+      <div className="grid gap-1.5">
+        <Label htmlFor="professorName">Professor (opcional)</Label>
+        <Input id="professorName" name="professorName" type="text" disabled={isSubmitting} />
       </div>
 
-      <button type="submit" disabled={isSubmitting}>
+      <Button type="submit" disabled={isSubmitting}>
         {isSubmitting ? "Processando..." : "Enviar"}
-      </button>
+      </Button>
 
-      {errorMessage && <p role="alert">{errorMessage}</p>}
+      {errorMessage && (
+        <p role="alert" className="text-sm text-destructive">
+          {errorMessage}
+        </p>
+      )}
     </form>
   );
 }

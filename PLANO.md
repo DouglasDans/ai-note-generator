@@ -753,15 +753,42 @@ ui.shadcn.com/docs/{cli,react-19,dark-mode/next,theming}.
   - **Gate:** toggle dark/light testado no navegador (clique muda o ícone
     sol/lua e o tema; reload mantém o tema escolhido, sem flash), build/
     test(56/56)/lint limpos.
-- **5c — Páginas:** home, `/[space]` (lista de cursos + `IngestForm`
-  reestilizado), `/[course]`, `/[session]` (conteúdo MDX, tags, tarefas)
-  com componentes shadcn (`button`, `input`, `label`, `card`, `badge`,
-  separador). **Decisão:** sem o `Form` do shadcn — é acoplado a
-  `react-hook-form`+`zod`, dependência nova que não se justifica pro
-  padrão atual de form nativo + `fetch` do projeto (ver `ingest-form`,
-  Fase 4b). **Gate:** rotas coerentes visualmente, responsivas, dark/light
-  ok, testes do `ingest-form` continuam passando (buscam por label/role,
-  não por classe).
+- **5c — Páginas ✅ CONCLUÍDA:** home, `/[space]` (lista de cursos +
+  `IngestForm` reestilizado), `/[course]`, `/[session]` (conteúdo MDX,
+  tags, tarefas) com componentes shadcn (`button`, `input`, `label`,
+  `card`, `badge`, `separator`). **Decisão mantida:** sem o `Form` do
+  shadcn — acoplado a `react-hook-form`+`zod`, não se justifica pro padrão
+  atual de form nativo + `fetch` (`ingest-form`, Fase 4b).
+  - **Home segue direção de design pedida por Douglas:** card centralizado
+    na tela, título "AI Note Generator" centralizado dentro do card.
+  - **Achado, não assumido:** `@tailwindcss/typography` (`prose` classes)
+    não estava instalado — sem ele, `session.summary`/`class_activities`/
+    `off_topic` (Markdown vindo da IA) renderizariam sem nenhum estilo de
+    tipografia (headings, negrito, listas, bloco de código todos iguais
+    visualmente). Adicionado como dependência nova, com justificativa:
+    é conteúdo central do produto, não estético. Ligado via `@plugin
+    "@tailwindcss/typography";` no `globals.css` (sintaxe CSS-first do
+    Tailwind v4, confirmada na doc oficial antes de escrever, não
+    assumida).
+  - **`sass` removido do `package.json`:** nenhum `.scss` restava no
+    projeto depois da migração do `ingest-form` e do `navbar`.
+  - **Bug pego na verificação visual, não em teste automatizado:** cards
+    de curso/sessão (`/[space]` e `/[course]`) saíam com nome e
+    professor/data empilhados e centralizados em vez de lado a lado — o
+    componente `CardContent` do shadcn já define `flex-col` por padrão, e
+    `className="flex items-center justify-between"` no call site não
+    sobrescrevia a direção (sem conflito direto pro `tailwind-merge`
+    resolver). Corrigido explicitando `flex-row`. Nenhum teste
+    automatizado cobre esses componentes (são só leitura, sem lógica) —
+    só a captura de tela pegou.
+  - **Dados de desenvolvimento semeados manualmente** (curso, sessão,
+    tarefas e datas mencionadas de exemplo) no Postgres local pra validar
+    visualmente `/[course]` e `/[session]`, que estavam sem nenhum dado
+    real desde a Fase 4 (sem `GEMINI_API_KEY` configurada localmente,
+    nunca uma ingestão completou). Mesma prática já usada na Fase 3c.
+  - **Gate:** rotas verificadas no navegador (desktop e mobile 390px,
+    sem overflow), dark/light ok, `npm run build`/`npm test`
+    (56/56)/`npm run lint` limpos.
 - **5d — Dashboard em `/[space]`:** lógica de negócio nova, não reskin —
   agrega `TaskItem`/`MentionedDate` de todos os cursos do space, filtra só
   o que ainda não passou, ordena por data; segunda seção com sessions

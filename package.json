@@ -41,6 +41,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
+    "@tailwindcss/typography": "^0.5.20",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^14.6.7",
@@ -54,7 +55,6 @@
     "jsdom": "^30.0.1",
     "postcss": "^8.5.28",
     "prisma": "^7.10.0",
-    "sass": "^1.86.1",
     "tailwindcss": "^4.3.3",
     "typescript": "^5",
     "vitest": "^5.0.0"
