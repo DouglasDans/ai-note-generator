@@ -47,7 +47,7 @@ describe("IngestForm", () => {
   });
 
   it("renderiza os campos esperados", () => {
-    render(<IngestForm spaceSlug="fatec-2026" disciplines={[]} />);
+    render(<IngestForm spaceSlug="fatec-2026" courses={[]} />);
 
     expect(screen.getByLabelText(/áudio/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/data da grava/i)).toBeInTheDocument();
@@ -56,13 +56,28 @@ describe("IngestForm", () => {
     expect(screen.getByRole("button", { name: /enviar/i })).toBeInTheDocument();
   });
 
+  it("ao selecionar uma disciplina existente, preenche o professor automaticamente", async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    render(
+      <IngestForm
+        spaceSlug="fatec-2026"
+        courses={[{ name: "Banco de Dados II", professor: "Profa. Ana Souza" }]}
+      />
+    );
+
+    await user.click(screen.getByLabelText(/disciplina/i));
+    await user.click(await screen.findByRole("option", { name: "Banco de Dados II" }));
+
+    expect(screen.getByLabelText(/professor/i)).toHaveTextContent("Profa. Ana Souza");
+  });
+
   it("envia POST com FormData correto e inicia polling ao receber 202", async () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     const fetchMock = vi.mocked(fetch);
     fetchMock.mockResolvedValueOnce(jsonResponse({ jobId: "job-1" }, 202));
     fetchMock.mockResolvedValueOnce(jsonResponse({ status: "processing" }));
 
-    render(<IngestForm spaceSlug="fatec-2026" disciplines={[]} />);
+    render(<IngestForm spaceSlug="fatec-2026" courses={[]} />);
     await fillAndSubmit(user);
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
@@ -93,7 +108,7 @@ describe("IngestForm", () => {
     fetchMock.mockResolvedValueOnce(jsonResponse({ jobId: "job-1" }, 202));
     fetchMock.mockResolvedValueOnce(jsonResponse({ status: "done" }));
 
-    render(<IngestForm spaceSlug="fatec-2026" disciplines={[]} />);
+    render(<IngestForm spaceSlug="fatec-2026" courses={[]} />);
     await fillAndSubmit(user);
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
 
@@ -114,7 +129,7 @@ describe("IngestForm", () => {
       jsonResponse({ status: "error", errorMessage: "Falha ao processar áudio." })
     );
 
-    render(<IngestForm spaceSlug="fatec-2026" disciplines={[]} />);
+    render(<IngestForm spaceSlug="fatec-2026" courses={[]} />);
     await fillAndSubmit(user);
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
 
@@ -132,7 +147,7 @@ describe("IngestForm", () => {
       jsonResponse({ error: "Space não encontrado." }, 404)
     );
 
-    render(<IngestForm spaceSlug="fatec-2026" disciplines={[]} />);
+    render(<IngestForm spaceSlug="fatec-2026" courses={[]} />);
     await fillAndSubmit(user);
 
     await waitFor(() =>

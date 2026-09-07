@@ -15,3 +15,14 @@ afterEach(cleanup);
 // Sem isso, os testes de tests/db/ (beforeEach com deleteMany) apagam
 // silenciosamente dado de dev criado na mão no mesmo Postgres.
 config({ path: ".env.test", override: true });
+
+// jsdom não implementa ResizeObserver nem Element.scrollIntoView, ambos
+// usados internamente pelo cmdk (base do componente Command do shadcn) —
+// sem isso, qualquer teste que abre um combobox quebra. Limitação do jsdom,
+// não do componente.
+global.ResizeObserver = class ResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+};
+Element.prototype.scrollIntoView = () => {};

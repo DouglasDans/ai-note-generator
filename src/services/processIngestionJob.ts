@@ -60,6 +60,7 @@ export async function processIngestionJob(
     await markIngestionJobDone(jobId);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
+    console.error(`[processIngestionJob] job ${jobId} failed:`, error);
     await markIngestionJobError(jobId, message);
   }
 }

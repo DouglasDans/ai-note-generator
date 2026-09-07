@@ -17,35 +17,49 @@ import { cn } from "@/lib/utils";
 type Props = {
   id?: string;
   name: string;
-  disciplines: string[];
+  options: string[];
+  value: string;
+  onValueChange: (value: string) => void;
+  placeholder: string;
   disabled?: boolean;
 };
 
-// Não é um select fechado: sugere as disciplinas já existentes nesse space
-// pra evitar duplicação por nome digitado diferente ("Banco de Dados II" vs
-// "Banco de Dados 2"), mas digitar um nome novo continua criando disciplina
-// nova — mesmo comportamento que o campo de texto livre já tinha.
-export default function DisciplineCombobox({ id, name, disciplines, disabled }: Props) {
+// Genérico: sugere as opções já existentes, mas digitar um valor novo
+// continua sendo aceito (não trava em lista fechada). Usado pra disciplina
+// e professor no formulário de upload.
+export default function Combobox({
+  id,
+  name,
+  options,
+  value,
+  onValueChange,
+  placeholder,
+  disabled,
+}: Props) {
   const [open, setOpen] = useState(false);
-  const [value, setValue] = useState("");
   const [search, setSearch] = useState("");
 
   const trimmedSearch = search.trim();
-  const matches = disciplines.filter((discipline) =>
-    discipline.toLowerCase().includes(trimmedSearch.toLowerCase())
+  const matches = options.filter((option) =>
+    option.toLowerCase().includes(trimmedSearch.toLowerCase())
   );
-  const isNewDiscipline =
+  const isNewValue =
     trimmedSearch.length > 0 &&
-    !disciplines.some((d) => d.toLowerCase() === trimmedSearch.toLowerCase());
+    !options.some((option) => option.toLowerCase() === trimmedSearch.toLowerCase());
 
   function select(next: string) {
-    setValue(next);
-    setSearch(next);
+    onValueChange(next);
     setOpen(false);
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (next) setSearch(value);
+      }}
+    >
       <input type="hidden" name={name} value={value} />
       <PopoverTrigger asChild>
         <Button
@@ -58,39 +72,28 @@ export default function DisciplineCombobox({ id, name, disciplines, disabled }: 
           className="w-full justify-between font-normal"
         >
           <span className={cn(!value && "text-muted-foreground")}>
-            {value || "Selecione ou digite uma disciplina"}
+            {value || placeholder}
           </span>
           <ChevronsUpDown className="size-4 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-72 p-0">
         <Command shouldFilter={false}>
-          <CommandInput
-            placeholder="Buscar disciplina..."
-            value={search}
-            onValueChange={setSearch}
-          />
+          <CommandInput placeholder="Buscar..." value={search} onValueChange={setSearch} />
           <CommandList>
-            {matches.length === 0 && !isNewDiscipline && (
-              <CommandEmpty>Nenhuma disciplina encontrada.</CommandEmpty>
+            {matches.length === 0 && !isNewValue && (
+              <CommandEmpty>Nenhum resultado encontrado.</CommandEmpty>
             )}
             <CommandGroup>
-              {matches.map((discipline) => (
-                <CommandItem
-                  key={discipline}
-                  value={discipline}
-                  onSelect={() => select(discipline)}
-                >
+              {matches.map((option) => (
+                <CommandItem key={option} value={option} onSelect={() => select(option)}>
                   <Check
-                    className={cn(
-                      "mr-2 size-4",
-                      value === discipline ? "opacity-100" : "opacity-0"
-                    )}
+                    className={cn("mr-2 size-4", value === option ? "opacity-100" : "opacity-0")}
                   />
-                  {discipline}
+                  {option}
                 </CommandItem>
               ))}
-              {isNewDiscipline && (
+              {isNewValue && (
                 <CommandItem value={trimmedSearch} onSelect={() => select(trimmedSearch)}>
                   Criar &quot;{trimmedSearch}&quot;
                 </CommandItem>

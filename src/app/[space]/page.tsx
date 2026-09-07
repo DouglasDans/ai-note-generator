@@ -27,10 +27,7 @@ export default async function SpacePage({ params }: Props) {
     <main className="mx-auto flex max-w-2xl flex-col gap-8">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">{space.slug}</h1>
-        <UploadSessionDialog
-          spaceSlug={space.slug}
-          disciplines={courses.map((course) => course.name)}
-        />
+        <UploadSessionDialog spaceSlug={space.slug} courses={courses} />
       </div>
 
       <div className="flex flex-col gap-3">

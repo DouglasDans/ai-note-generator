@@ -12,15 +12,20 @@ import {
 } from "@/components/ui/dialog";
 import IngestForm from "@/components/ingest-form";
 
+type Course = {
+  name: string;
+  professor: string;
+};
+
 type Props = {
   spaceSlug: string;
-  disciplines: string[];
+  courses: Course[];
 };
 
 // Formulário escondido atrás de um botão + modal: a tela do space acumulava
 // tudo visível de uma vez (form de upload sempre aberto + próximas entregas
 // + disciplinas), feedback do Douglas após navegar na UI de verdade.
-export default function UploadSessionDialog({ spaceSlug, disciplines }: Props) {
+export default function UploadSessionDialog({ spaceSlug, courses }: Props) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -35,11 +40,7 @@ export default function UploadSessionDialog({ spaceSlug, disciplines }: Props) {
         <DialogHeader>
           <DialogTitle>Enviar nova aula</DialogTitle>
         </DialogHeader>
-        <IngestForm
-          spaceSlug={spaceSlug}
-          disciplines={disciplines}
-          onDone={() => setOpen(false)}
-        />
+        <IngestForm spaceSlug={spaceSlug} courses={courses} onDone={() => setOpen(false)} />
       </DialogContent>
     </Dialog>
   );

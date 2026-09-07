@@ -904,6 +904,36 @@ form do que um Popover pequeno.
 abre o modal com os 4 campos, título principal da página ficou só nome +
 próximas entregas + disciplinas).
 
+### Fase 5g — Autocomplete de professor + log de erro do Gemini ✅ CONCLUÍDA
+
+- **`processIngestionJob`:** `console.error` adicionado no catch antes de
+  gravar o job como `error` — o erro técnico já ficava no banco
+  (`ingestion_jobs.error_message`), mas não aparecia no log do servidor,
+  exigindo consultar o Postgres pra depurar. Pedido direto do Douglas.
+- **Campo de professor também virou combobox com autocomplete**, mesmo
+  padrão do de disciplina. O componente `discipline-combobox` foi
+  generalizado pra `src/components/combobox/` (reutilizável, recebe
+  `options`/`value`/`onValueChange`/`placeholder` por prop) em vez de
+  duplicar a lógica pro professor.
+- **Selecionar uma disciplina já cadastrada preenche o professor
+  sozinho** — o vínculo já existe no banco (`Course.professor`), pedir de
+  novo seria redundante. Continua editável depois (não trava o valor).
+  `IngestForm` passou a receber `courses: {name, professor}[]` em vez de
+  só `disciplines: string[]`, pra ter esse vínculo disponível no client.
+- **TDD:** teste novo cobrindo o preenchimento automático, interagindo de
+  verdade com o combobox (abre, clica na opção, confere o valor do
+  professor).
+- **Achado de ambiente, não de código:** jsdom não implementa
+  `ResizeObserver` nem `Element.scrollIntoView`, ambos usados
+  internamente pelo `cmdk` (base do `Command` do shadcn) — qualquer teste
+  que abre um combobox quebrava com isso. Polyfills mínimos adicionados
+  em `vitest.setup.ts`, mesmo padrão das outras lacunas de jsdom já
+  documentadas ali.
+
+**Gate:** build/test(63/63)/lint limpos, verificado no navegador
+(selecionar "Banco de Dados II" preenche "Profa. Ana Souza" sozinho no
+campo de professor).
+
 ---
 
 ## 7. Adiado (não é para agora)

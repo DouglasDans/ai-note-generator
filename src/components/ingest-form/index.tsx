@@ -5,11 +5,16 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import DisciplineCombobox from "@/components/discipline-combobox";
+import Combobox from "@/components/combobox";
+
+type Course = {
+  name: string;
+  professor: string;
+};
 
 type Props = {
   spaceSlug: string;
-  disciplines: string[];
+  courses: Course[];
   onDone?: () => void;
 };
 
@@ -17,12 +22,28 @@ type IngestJobStatus = "pending" | "processing" | "done" | "error";
 
 const POLL_INTERVAL_MS = 2000;
 
-export default function IngestForm({ spaceSlug, disciplines, onDone }: Props) {
+export default function IngestForm({ spaceSlug, courses, onDone }: Props) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [discipline, setDiscipline] = useState("");
+  const [professor, setProfessor] = useState("");
   const formRef = useRef<HTMLFormElement>(null);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const disciplineOptions = courses.map((course) => course.name);
+  const professorOptions = [...new Set(courses.map((course) => course.professor))];
+
+  // Escolher uma disciplina já cadastrada preenche o professor dela — o
+  // vínculo já existe no banco (Course.professor), sem motivo pra pedir de
+  // novo. Continua editável depois: não é um valor travado.
+  function handleDisciplineChange(next: string) {
+    setDiscipline(next);
+    const matchedCourse = courses.find((course) => course.name === next);
+    if (matchedCourse) {
+      setProfessor(matchedCourse.professor);
+    }
+  }
 
   useEffect(() => {
     return () => {
@@ -93,17 +114,28 @@ export default function IngestForm({ spaceSlug, disciplines, onDone }: Props) {
 
       <div className="grid gap-1.5">
         <Label htmlFor="courseName">Disciplina (opcional)</Label>
-        <DisciplineCombobox
+        <Combobox
           id="courseName"
           name="courseName"
-          disciplines={disciplines}
+          options={disciplineOptions}
+          value={discipline}
+          onValueChange={handleDisciplineChange}
+          placeholder="Selecione ou digite uma disciplina"
           disabled={isSubmitting}
         />
       </div>
 
       <div className="grid gap-1.5">
         <Label htmlFor="professorName">Professor (opcional)</Label>
-        <Input id="professorName" name="professorName" type="text" disabled={isSubmitting} />
+        <Combobox
+          id="professorName"
+          name="professorName"
+          options={professorOptions}
+          value={professor}
+          onValueChange={setProfessor}
+          placeholder="Selecione ou digite um professor"
+          disabled={isSubmitting}
+        />
       </div>
 
       <Button type="submit" disabled={isSubmitting}>
