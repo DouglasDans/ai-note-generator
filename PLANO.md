@@ -4,7 +4,7 @@
 > de execução. Atualizar a cada fase concluída.
 >
 > Última atualização: 06/09/2026 · Fases 0, 1, 2 e 3 (3a, 3b, 3c) concluídas ·
-> Fase 4a e 4b concluídas
+> Fase 4a e 4b concluídas · Fase 4.5 (upgrade Next.js 16) concluída
 
 ---
 
@@ -605,11 +605,102 @@ Decomposta como a Fase 3, mesmo padrão de gates.
 **DoD:** a Giovanna sobe um áudio pelo navegador e vê a aula registrada, sem
 Python, sem terminal, sem credencial no disco.
 
+### Fase 4.5 — Upgrade Next.js 15 → 16 ✅ CONCLUÍDA
+
+Decidido rodar como fase isolada antes da reforma visual (06/09/2026), pra
+separar causa se algo quebrasse: se o build falhasse depois, dava pra saber
+se foi o upgrade ou a troca de UI.
+
+- `next` 15.2.4→16.3.4, `react`/`react-dom` 19.0→19.2.8, `@next/mdx` e
+  `eslint-config-next` alinhados em 16.3.4 (todas com release estável
+  disponível — verificado via `npm view`, não assumido; `prisma` continua
+  pinado em 7.10.0 porque a tag `latest` do pacote ainda é uma release
+  candidate, `8.0.0-rc.13`, mesma situação já documentada na Fase 3 pro
+  Prisma 7)
+- **Auditado contra o guia oficial de upgrade antes de bater a versão:**
+  o projeto já não usava nenhuma das APIs que o Next 16 quebra (`params`/
+  `searchParams` já eram `Promise` com `await` desde a Fase 3c, sem
+  `middleware.ts`, sem `next/image`, sem `revalidateTag`, sem
+  `unstable_*`) — risco avaliado como baixo antes de prosseguir, não só
+  depois de quebrar
+- **Achado 1 — Turbopack (padrão a partir do Next 16) não serializa plugins
+  remark/rehype passados por referência de função:** `next.config.ts`
+  quebrava o build com "does not have serializable options". Corrigido
+  passando os plugins do MDX por nome de string (`"remark-gfm"`,
+  `"rehype-starry-night"`) em vez de importar a função — sintaxe suportada
+  especificamente para isso, confirmada na doc oficial de MDX do Next.
+- **Achado 2 — `next lint` foi removido no Next 16**, junto com a opção
+  `eslint` do `next.config.ts` (o `ignoreDuringBuilds: true` que existia
+  virou no-op silencioso). Migrado pro flat config nativo do
+  `eslint-config-next` 16 (`eslint-config-next/core-web-vitals` +
+  `eslint-config-next/typescript`, substituindo o `FlatCompat` de
+  `@eslint/eslintrc`, removido do `package.json` por ficar sem uso) e o
+  script `lint` do `package.json` passou a chamar `eslint .` diretamente.
+- `tsconfig.json`: `jsx` de `"preserve"` para `"react-jsx"` — mudança
+  mandatória, aplicada automaticamente pelo `npx next typegen` (exigido no
+  Next 16 pra gerar os helpers de tipo de rota).
+- **Pendência registrada, não corrigida nesta fase:** o bump do
+  `eslint-config-next` trouxe versão nova do `eslint-plugin-react-hooks`,
+  que passou a reclamar (`react-hooks/set-state-in-effect`) do padrão
+  `useEffect(() => setMounted(true), [])` em `src/components/theme-toggle/
+  index.tsx` (usado pra evitar mismatch de hidratação SSR). Arquivo é
+  MUI/Emotion puro, candidato a ser deletado/reescrito na Fase 5b — decisão
+  foi não corrigir agora para não gastar trabalho num arquivo que já vai
+  ser substituído.
+
+**DoD:** `npm run build`, `npm test` (56/56) e smoke manual (dev server:
+home, space existente, space inexistente, endpoint de upload com erro
+esperado de campo faltando) passando. Lint com 1 erro conhecido e adiado
+(ver achado acima) em arquivo fora do escopo desta fase.
+
 ### Fase 5 — Interface
 
-- Migração para shadcn/ui + Tailwind
-- Remoção de MUI Joy, Emotion e SCSS Modules
-- Dashboard em `/[space]`
+Decomposta como a Fase 3/4, com gate (testes + lint + build + verificação
+manual + commit) ao final de cada sub-fase.
+
+**Direção de design (decidida em 06/09/2026):** tema neutro padrão do
+shadcn/ui, sem identidade visual customizada — pedido explícito do Douglas
+("padrão shadcn completo"). Mantém a fonte já configurada (Open Sans via
+`next/font`). Esforço de design concentrado em hierarquia de informação
+(dashboard, listas, estados vazio/erro), não em paleta/tipografia autoral.
+
+**Pesquisado nas fontes oficiais antes de planejar (06/09/2026):** Tailwind
+v4 não usa mais `tailwind.config.js` — config é CSS-first (`@import
+"tailwindcss"` + `@theme` no próprio CSS). `npx shadcn@latest init` gera
+`components.json` + `src/lib/utils.ts`; com npm (não pnpm/yarn) pode exigir
+`--legacy-peer-deps` por peer deps de libs transitivas ainda não
+formalmente atualizadas pra React 19. Dark mode: caminho oficial é
+`next-themes` (substitui `CssVarsProvider`/`useColorScheme` do MUI Joy).
+Fontes: tailwindcss.com/docs/installation/framework-guides/nextjs,
+ui.shadcn.com/docs/{cli,react-19,dark-mode/next,theming}.
+
+- **5a — Setup:** `tailwindcss` + `@tailwindcss/postcss` + `postcss`,
+  `postcss.config.mjs`; `globals.scss` → `globals.css` (conteúdo já é CSS
+  puro, sem sintaxe Sass — troca de extensão, sem reescrita); `npx
+  shadcn@latest init` (tema neutro). Sem mudança visual — nada ainda
+  consome Tailwind. **Gate:** build/test/lint limpos, tela idêntica a hoje.
+- **5b — Casca:** `next-themes` substitui `theme-registry.tsx`; `navbar` e
+  `theme-toggle` reconstruídos com shadcn `Button` + `useTheme()`; deleta
+  `src/theme/`; remove `@mui/joy` + `@emotion/*` do `package.json`.
+  **Gate:** toggle dark/light funcionando e persistindo, build/test/lint
+  limpos.
+- **5c — Páginas:** home, `/[space]` (lista de cursos + `IngestForm`
+  reestilizado), `/[course]`, `/[session]` (conteúdo MDX, tags, tarefas)
+  com componentes shadcn (`button`, `input`, `label`, `card`, `badge`,
+  separador). **Decisão:** sem o `Form` do shadcn — é acoplado a
+  `react-hook-form`+`zod`, dependência nova que não se justifica pro
+  padrão atual de form nativo + `fetch` do projeto (ver `ingest-form`,
+  Fase 4b). **Gate:** rotas coerentes visualmente, responsivas, dark/light
+  ok, testes do `ingest-form` continuam passando (buscam por label/role,
+  não por classe).
+- **5d — Dashboard em `/[space]`:** lógica de negócio nova, não reskin —
+  agrega `TaskItem`/`MentionedDate` de todos os cursos do space, filtra só
+  o que ainda não passou, ordena por data; segunda seção com sessions
+  recentes. Tem regra condicional e cruzamento entre tabelas — antes de
+  código, sessão de **Example Mapping** pra fechar as regras (o que conta
+  como "próxima", tarefa sem `*_iso`, janela de "recente"). Depois: TDD na
+  query do repositório (integração real, mesmo padrão dos outros
+  repositórios) + UI.
 
 **DoD:** nenhuma dependência de MUI/Emotion no `package.json`; dashboard
 mostrando próximas provas ordenadas.

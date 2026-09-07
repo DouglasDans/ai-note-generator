@@ -1,20 +1,18 @@
 import type { NextConfig } from "next";
 import createMDX from "@next/mdx";
-import remarkGfm from "remark-gfm";
-import rehypeStarryNight from "rehype-starry-night";
 
 /** @type {import('next').NextConfig} */
 const nextConfig: NextConfig = {
   pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
 };
 
+// Turbopack (padrão a partir do Next 16) só serializa plugins remark/rehype
+// passados por nome de módulo, não por referência de função — ver
+// https://nextjs.org/docs/app/guides/mdx#using-plugins-with-turbopack
 const withMDX = createMDX({
   options: {
-    remarkPlugins: [remarkGfm],
-    rehypePlugins: [rehypeStarryNight],
+    remarkPlugins: ["remark-gfm"],
+    rehypePlugins: ["rehype-starry-night"],
   },
 });
 
