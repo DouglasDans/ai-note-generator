@@ -653,6 +653,40 @@ home, space existente, space inexistente, endpoint de upload com erro
 esperado de campo faltando) passando. Lint com 1 erro conhecido e adiado
 (ver achado acima) em arquivo fora do escopo desta fase.
 
+### Fase 4.6 — Auditoria de segurança de dependências ✅ CONCLUÍDA
+
+Motivada pelo pedido de manter tudo atualizado "pra poupar problemas de
+segurança" — verificado com `npm audit`, não assumido que upgrade de versão
+sozinho resolveria.
+
+- **`next-mdx-remote` 5.0.0→6.0.0 (correção real, não só higiene):**
+  vulnerabilidade alta (CVSS 8.8, CWE-94 — execução de código arbitrário),
+  `GHSA-g4xw-jxrg-5f6m`, afeta `serialize`/renderização de MDX não
+  confiável em versões 4.3.0–5.x. **Diretamente aplicável a este projeto:**
+  as 3 chamadas de `MDXRemote` em `[session]/page.tsx` renderizam
+  `summary`/`class_activities`/`off_topic` — conteúdo gerado pela IA a
+  partir de áudio que qualquer um com o link do space pode enviar (decisão
+  4.1, sem login). v6.0.0 passa a bloquear execução de JS por padrão
+  (`blockJS`/`blockDangerousJS: true`) e remove a prop `scope` do modo RSC
+  — não usada em nenhuma das 3 chamadas do projeto, upgrade sem mudança de
+  código.
+- **`npm audit fix` (sem `--force`):** resolveu sozinho 12 das 16
+  vulnerabilidades originais, todas transitivas do toolchain de lint/build
+  (eslint, js-yaml, minimatch, picomatch, immutable, flatted, ajv,
+  brace-expansion), sem mudança de versão major em nada que o projeto usa
+  diretamente.
+- **Decisão: não rodar `npm audit fix --force`.** As 4 vulnerabilidades
+  restantes são todas dentro do `prisma` (CLI, devDependency — não vai pro
+  bundle de produção) via um driver MySQL que o pacote empacota mas que
+  este projeto nunca usa (só Postgres via `@prisma/adapter-pg`). O único
+  fix disponível rebaixaria `prisma` de 7.10.0 pra uma versão 6.x —
+  trocaria uma vulnerabilidade em código inalcançável por uma regressão
+  real de versão. Risco residual aceito e documentado, não ignorado.
+
+**DoD:** `npm audit` de 16→4 vulnerabilidades, as 4 restantes avaliadas e
+descartadas com justificativa (não é código alcançável em produção);
+`next-mdx-remote` na versão corrigida; build e testes (56/56) passando.
+
 ### Fase 5 — Interface
 
 Decomposta como a Fase 3/4, com gate (testes + lint + build + verificação
