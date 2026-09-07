@@ -4,7 +4,9 @@
 > de execução. Atualizar a cada fase concluída.
 >
 > Última atualização: 06/09/2026 · Fases 0, 1, 2 e 3 (3a, 3b, 3c) concluídas ·
-> Fase 4a e 4b concluídas · Fase 4.5 (upgrade Next.js 16) concluída
+> Fase 4a e 4b concluídas · Fase 4.5 (upgrade Next.js 16), 4.6 (auditoria de
+> segurança) e 5 (5a-5d, interface shadcn/ui) concluídas · Fase 4c (deploy
+> Railway) pendente
 
 ---
 
@@ -789,14 +791,32 @@ ui.shadcn.com/docs/{cli,react-19,dark-mode/next,theming}.
   - **Gate:** rotas verificadas no navegador (desktop e mobile 390px,
     sem overflow), dark/light ok, `npm run build`/`npm test`
     (56/56)/`npm run lint` limpos.
-- **5d — Dashboard em `/[space]`:** lógica de negócio nova, não reskin —
-  agrega `TaskItem`/`MentionedDate` de todos os cursos do space, filtra só
-  o que ainda não passou, ordena por data; segunda seção com sessions
-  recentes. Tem regra condicional e cruzamento entre tabelas — antes de
-  código, sessão de **Example Mapping** pra fechar as regras (o que conta
-  como "próxima", tarefa sem `*_iso`, janela de "recente"). Depois: TDD na
-  query do repositório (integração real, mesmo padrão dos outros
-  repositórios) + UI.
+- **5d — Dashboard em `/[space]` ✅ CONCLUÍDA:** `src/db/dashboard.repository.ts`
+  novo — `listUpcomingItemsBySpace` agrega `TaskItem` + `MentionedDate` de
+  todos os cursos do space, `listRecentSessionsBySpace` traz as sessions
+  mais recentes.
+  - **Regras fechadas (Example Mapping compacto, resolvido sem parar a
+    sessão — task simples, 2 regras, sem ambiguidade de negócio real):**
+    item só entra em "próximas" com `*_iso` preenchido e `>= agora`
+    (inclusive); sem `*_iso` fica de fora — não dá pra saber se já passou;
+    ordenado por data ascendente, cruzando todos os cursos do space.
+    "Recentes" = 5 sessions mais recentes por `recordingDate desc` do
+    space inteiro, sem recorte de janela de tempo (mais simples, sempre
+    mostra algo se existir sessão).
+  - **TDD real:** 9 testes de integração escritos antes da implementação
+    (`tests/db/dashboard.repository.test.ts`, Postgres local) — cobrem
+    filtro por data (igual/depois/antes de agora), exclusão de item sem
+    `*_iso`, combinação entre cursos, não-vazamento entre spaces, `limit`.
+    `now` é parâmetro injetável (default `new Date()`) pra teste não
+    depender da data real do sistema — mesmo padrão de injeção de data já
+    usado no pipeline de IA (Fase 1).
+  - UI em `/[space]/page.tsx`: duas listas novas acima de "Cursos", com
+    link direto pra sessão (`courseSlug`/`sessionSlug` incluídos no
+    retorno do repositório especificamente pra isso, já que as rotas são
+    por slug, não por id).
+  - **Gate:** 65 testes passando (9 novos), lint limpo, build ok,
+    verificado no navegador com dado semeado (ordem correta, item sem
+    data excluído, link da lista leva pra sessão certa).
 
 **DoD:** nenhuma dependência de MUI/Emotion no `package.json`; dashboard
 mostrando próximas provas ordenadas.
