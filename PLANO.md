@@ -966,6 +966,60 @@ Motivada pelos dois 503 "high demand" seguidos na verificação manual da
 verifica a chamada (`generateCourseExtraction.test.ts`) atualizados
 juntos.
 
+### Fase 5i — Retry com backoff + upload não-bloqueante ✅ CONCLUÍDA
+
+Pedido do Douglas: implementar o retry combinado antes, e "desbloquear o
+usuário quando ele enviar o arquivo" — status de processamento visível
+sem travar a tela.
+
+- **Retry com backoff em `src/services/ai/client.ts`:** `GoogleGenAI`
+  construído com `httpOptions.retryOptions` (`attempts: 3, initialDelay:
+  30, maxDelay: 120`) — aplica a toda chamada HTTP feita pelo client
+  (upload e generateContent), não precisa listar `httpStatusCodes`
+  porque o padrão do SDK já cobre 408/429/5xx. **Confirmado funcionando
+  em produção local**: um job real que antes falhava em ~30-50s com 503
+  passou a demorar 258s antes de desistir — sinal direto de que as
+  tentativas extras estão acontecendo, não só configuradas.
+- **Upload deixou de bloquear o usuário.** Reestruturação de
+  responsabilidades:
+  - `IngestForm` não faz mais polling — só cuida do POST inicial e
+    chama `onSubmitted(jobId)` assim que recebe o `jobId` (~1-2s, não
+    minutos). Ficou bem mais simples.
+  - `IngestionJobsProvider` (novo, `src/components/ingestion-jobs-provider/`)
+    assume o polling, toast (sucesso/erro via `sonner`) e
+    `router.refresh()` quando o job termina.
+  - `IngestionJobsIndicator` (ícone de sino/spinner + dropdown com status
+    por job) e `Toaster` do sonner.
+  - **Achado corrigido antes de terminar, não depois:** a primeira
+    versão colocava esse estado dentro da própria página do space
+    (`SpaceUploadArea`) — o Douglas trocou de tela durante um
+    processamento de verdade e o indicador sumiu, porque o componente
+    desmontou. Corrigido subindo o `IngestionJobsProvider` pro layout
+    raiz (`src/app/layout.tsx`), que só desmonta se o app inteiro
+    desmontar — sobrevive a qualquer navegação entre páginas.
+    `IngestionJobsIndicator` foi pro `Navbar` (visível em qualquer tela),
+    e `SpaceUploadArea` foi removido por ficar redundante.
+- **Verificado que `router.refresh()` realmente atualiza sem reload
+  manual:** testado inserindo uma tarefa nova direto no Postgres
+  (simulando o que um job real produziria) enquanto navegado pra outra
+  página via link, depois voltando pro space via link — apareceu na
+  lista de "Próximas provas e entregas" sem reload, confirmando que a
+  página não serve payload em cache obsoleto na navegação de volta.
+- **TDD:** testes de `ingest-form` simplificados (só cobrem o POST +
+  `onSubmitted`, sem mais polling); testes novos em
+  `tests/components/ingestion-jobs-provider/` cobrindo o fluxo completo
+  (upload → indicador aparece → toast de sucesso/erro → para de pollar
+  depois de terminar), compondo `IngestionJobsProvider` +
+  `IngestionJobsIndicator` + `UploadSessionDialog` como em produção.
+- **Verificado com job real contra a API** (não só mock): um upload de
+  áudio de teste completou com sucesso de ponta a ponta (`status: done`,
+  curso e sessão persistidos), confirmando pipeline + modelo novo +
+  retry + non-blocking UX funcionando juntos.
+
+**Gate:** build/test(66/66)/lint limpos, verificado no navegador com
+job real (sucesso e timeout de retry), indicador sobrevivendo a troca
+de tela, dashboard atualizando sozinho.
+
 ---
 
 ## 7. Adiado (não é para agora)

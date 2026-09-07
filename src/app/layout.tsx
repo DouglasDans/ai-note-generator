@@ -4,6 +4,8 @@ import "./globals.css";
 import { ThemeProvider } from "next-themes";
 import { Analytics } from "@vercel/analytics/react";
 import Navbar from "@/components/navbar";
+import { Toaster } from "@/components/ui/sonner";
+import { IngestionJobsProvider } from "@/components/ingestion-jobs-provider";
 
 const openSans = Open_Sans({
   variable: "--font-sans",
@@ -25,10 +27,13 @@ export default function RootLayout({
       <body>
         <Analytics />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <div className="main-container">
-            <Navbar />
-            {children}
-          </div>
+          <IngestionJobsProvider>
+            <div className="main-container">
+              <Navbar />
+              {children}
+            </div>
+            <Toaster />
+          </IngestionJobsProvider>
         </ThemeProvider>
       </body>
     </html>

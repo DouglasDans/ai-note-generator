@@ -6,6 +6,7 @@ import { Home, LogOut } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import ThemeToggle from "@/components/theme-toggle";
+import IngestionJobsIndicator from "@/components/ingestion-jobs-indicator";
 import { isReservedSlug } from "@/db/reservedSlugs";
 
 export default function Navbar() {
@@ -30,7 +31,10 @@ export default function Navbar() {
           </Link>
         )}
       </div>
-      <ThemeToggle />
+      <div className="flex items-center gap-2">
+        <IngestionJobsIndicator />
+        <ThemeToggle />
+      </div>
     </nav>
   );
 }

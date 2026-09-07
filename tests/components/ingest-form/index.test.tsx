@@ -3,13 +3,6 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import IngestForm from "@/components/ingest-form";
 
-const mockPush = vi.fn();
-const mockRefresh = vi.fn();
-
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: mockPush, refresh: mockRefresh }),
-}));
-
 function jsonResponse(body: unknown, status = 200) {
   return {
     ok: status >= 200 && status < 300,
@@ -35,19 +28,15 @@ async function fillAndSubmit(user: ReturnType<typeof userEvent.setup>) {
 
 describe("IngestForm", () => {
   beforeEach(() => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
     vi.stubGlobal("fetch", vi.fn());
   });
 
   afterEach(() => {
-    vi.useRealTimers();
     vi.unstubAllGlobals();
-    mockPush.mockReset();
-    mockRefresh.mockReset();
   });
 
   it("renderiza os campos esperados", () => {
-    render(<IngestForm spaceSlug="fatec-2026" courses={[]} />);
+    render(<IngestForm spaceSlug="fatec-2026" courses={[]} onSubmitted={vi.fn()} />);
 
     expect(screen.getByLabelText(/áudio/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/data da grava/i)).toBeInTheDocument();
@@ -57,11 +46,12 @@ describe("IngestForm", () => {
   });
 
   it("ao selecionar uma disciplina existente, preenche o professor automaticamente", async () => {
-    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const user = userEvent.setup();
     render(
       <IngestForm
         spaceSlug="fatec-2026"
         courses={[{ name: "Banco de Dados II", professor: "Profa. Ana Souza" }]}
+        onSubmitted={vi.fn()}
       />
     );
 
@@ -71,90 +61,41 @@ describe("IngestForm", () => {
     expect(screen.getByLabelText(/professor/i)).toHaveTextContent("Profa. Ana Souza");
   });
 
-  it("envia POST com FormData correto e inicia polling ao receber 202", async () => {
-    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+  it("envia POST com FormData correto e chama onSubmitted com o jobId ao receber 202", async () => {
+    const user = userEvent.setup();
     const fetchMock = vi.mocked(fetch);
     fetchMock.mockResolvedValueOnce(jsonResponse({ jobId: "job-1" }, 202));
-    fetchMock.mockResolvedValueOnce(jsonResponse({ status: "processing" }));
+    const onSubmitted = vi.fn();
 
-    render(<IngestForm spaceSlug="fatec-2026" courses={[]} />);
+    render(<IngestForm spaceSlug="fatec-2026" courses={[]} onSubmitted={onSubmitted} />);
     await fillAndSubmit(user);
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(onSubmitted).toHaveBeenCalledWith("job-1"));
+    expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url, options] = fetchMock.mock.calls[0];
     expect(url).toBe("/api/fatec-2026/ingest");
     expect(options?.method).toBe("POST");
     const body = options?.body as FormData;
     expect(body.get("recordingDate")).toBe("2026-03-10");
-    // Não inspeciona o File dentro do FormData: user-event simula
-    // input.files só no wrapper do elemento, e o construtor nativo
-    // `new FormData(form)` do jsdom lê o objeto impl interno, que não é
-    // atualizado por esse mock — sempre extrai um File vazio em teste,
-    // mesmo com o upload correto no DOM (verificado abaixo). Limitação
-    // documentada do jsdom, não do componente; fechada pela verificação
-    // manual no navegador antes do commit.
-    expect(
-      (screen.getByLabelText(/áudio/i) as HTMLInputElement).files?.[0]?.name
-    ).toBe("aula.mp3");
 
-    await vi.advanceTimersByTimeAsync(2000);
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
-    expect(fetchMock.mock.calls[1][0]).toBe("/api/fatec-2026/ingest/job-1");
-  });
-
-  it("ao concluir (done), redireciona pro space e para de pollar", async () => {
-    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
-    const fetchMock = vi.mocked(fetch);
-    fetchMock.mockResolvedValueOnce(jsonResponse({ jobId: "job-1" }, 202));
-    fetchMock.mockResolvedValueOnce(jsonResponse({ status: "done" }));
-
-    render(<IngestForm spaceSlug="fatec-2026" courses={[]} />);
-    await fillAndSubmit(user);
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
-
-    await vi.advanceTimersByTimeAsync(2000);
-    await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/fatec-2026"));
-    expect(mockRefresh).toHaveBeenCalled();
-
-    const callsAfterDone = fetchMock.mock.calls.length;
-    await vi.advanceTimersByTimeAsync(4000);
-    expect(fetchMock).toHaveBeenCalledTimes(callsAfterDone);
-  });
-
-  it("ao falhar (error), mostra a mensagem e reabilita o formulário", async () => {
-    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
-    const fetchMock = vi.mocked(fetch);
-    fetchMock.mockResolvedValueOnce(jsonResponse({ jobId: "job-1" }, 202));
-    fetchMock.mockResolvedValueOnce(
-      jsonResponse({ status: "error", errorMessage: "Falha ao processar áudio." })
-    );
-
-    render(<IngestForm spaceSlug="fatec-2026" courses={[]} />);
-    await fillAndSubmit(user);
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
-
-    await vi.advanceTimersByTimeAsync(2000);
-    await waitFor(() =>
-      expect(screen.getByRole("alert")).toHaveTextContent("Falha ao processar áudio.")
-    );
     expect(screen.getByRole("button", { name: /enviar/i })).not.toBeDisabled();
   });
 
-  it("se a resposta inicial não for 202, mostra erro e não inicia polling", async () => {
-    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+  it("se a resposta não for 202, mostra erro e não chama onSubmitted", async () => {
+    const user = userEvent.setup();
     const fetchMock = vi.mocked(fetch);
     fetchMock.mockResolvedValueOnce(
       jsonResponse({ error: "Space não encontrado." }, 404)
     );
+    const onSubmitted = vi.fn();
 
-    render(<IngestForm spaceSlug="fatec-2026" courses={[]} />);
+    render(<IngestForm spaceSlug="fatec-2026" courses={[]} onSubmitted={onSubmitted} />);
     await fillAndSubmit(user);
 
     await waitFor(() =>
       expect(screen.getByRole("alert")).toHaveTextContent("Space não encontrado.")
     );
-
-    await vi.advanceTimersByTimeAsync(5000);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(onSubmitted).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: /enviar/i })).not.toBeDisabled();
   });
 });

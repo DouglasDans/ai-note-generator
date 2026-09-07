@@ -1,7 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { FormEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,21 +14,17 @@ type Course = {
 type Props = {
   spaceSlug: string;
   courses: Course[];
-  onDone?: () => void;
+  onSubmitted: (jobId: string) => void;
 };
 
-type IngestJobStatus = "pending" | "processing" | "done" | "error";
-
-const POLL_INTERVAL_MS = 2000;
-
-export default function IngestForm({ spaceSlug, courses, onDone }: Props) {
-  const router = useRouter();
+// Só cuida do envio em si (POST -> jobId). Acompanhar o processamento até
+// done/error é responsabilidade de quem chama (SpaceUploadArea) — o
+// usuário não fica mais travado nessa tela esperando a IA terminar.
+export default function IngestForm({ spaceSlug, courses, onSubmitted }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [discipline, setDiscipline] = useState("");
   const [professor, setProfessor] = useState("");
-  const formRef = useRef<HTMLFormElement>(null);
-  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const disciplineOptions = courses.map((course) => course.name);
   const professorOptions = [...new Set(courses.map((course) => course.professor))];
@@ -43,38 +38,6 @@ export default function IngestForm({ spaceSlug, courses, onDone }: Props) {
     if (matchedCourse) {
       setProfessor(matchedCourse.professor);
     }
-  }
-
-  useEffect(() => {
-    return () => {
-      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-    };
-  }, []);
-
-  function stopPolling() {
-    if (pollIntervalRef.current) {
-      clearInterval(pollIntervalRef.current);
-      pollIntervalRef.current = null;
-    }
-  }
-
-  function pollJobStatus(jobId: string) {
-    pollIntervalRef.current = setInterval(async () => {
-      const response = await fetch(`/api/${spaceSlug}/ingest/${jobId}`);
-      const data: { status: IngestJobStatus; errorMessage?: string | null } =
-        await response.json();
-
-      if (data.status === "done") {
-        stopPolling();
-        onDone?.();
-        router.push(`/${spaceSlug}`);
-        router.refresh();
-      } else if (data.status === "error") {
-        stopPolling();
-        setIsSubmitting(false);
-        setErrorMessage(data.errorMessage ?? "Falha ao processar áudio.");
-      }
-    }, POLL_INTERVAL_MS);
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -97,11 +60,12 @@ export default function IngestForm({ spaceSlug, courses, onDone }: Props) {
     }
 
     const { jobId }: { jobId: string } = await response.json();
-    pollJobStatus(jobId);
+    setIsSubmitting(false);
+    onSubmitted(jobId);
   }
 
   return (
-    <form ref={formRef} className="grid gap-4" onSubmit={handleSubmit}>
+    <form className="grid gap-4" onSubmit={handleSubmit}>
       <div className="grid gap-1.5">
         <Label htmlFor="audio">Áudio da aula</Label>
         <Input id="audio" name="audio" type="file" accept="audio/*" required disabled={isSubmitting} />
@@ -139,7 +103,7 @@ export default function IngestForm({ spaceSlug, courses, onDone }: Props) {
       </div>
 
       <Button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? "Processando..." : "Enviar"}
+        {isSubmitting ? "Enviando..." : "Enviar"}
       </Button>
 
       {errorMessage && (
