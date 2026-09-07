@@ -1,6 +1,7 @@
 import {
   generateCourseExtraction,
   type GenAIClient,
+  type GroqClient,
 } from "@/services/ai/generateCourseExtraction";
 import { persistCourseExtraction } from "@/db/course.repository";
 import {
@@ -10,7 +11,8 @@ import {
 } from "@/db/ingestionJob.repository";
 
 export interface ProcessIngestionJobParams {
-  client: GenAIClient;
+  geminiClient: GenAIClient;
+  groqClient: GroqClient;
   jobId: string;
   spaceId: string;
   audioSource: Blob;
@@ -34,7 +36,8 @@ export async function processIngestionJob(
   params: ProcessIngestionJobParams
 ): Promise<void> {
   const {
-    client,
+    geminiClient,
+    groqClient,
     jobId,
     spaceId,
     audioSource,
@@ -48,7 +51,8 @@ export async function processIngestionJob(
     await markIngestionJobProcessing(jobId);
 
     const result = await generateCourseExtraction({
-      client,
+      geminiClient,
+      groqClient,
       audioSource,
       audioMimeType,
       recordingDate,

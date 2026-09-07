@@ -1,56 +1,49 @@
 import type {
   CourseExtraction,
-  CourseExtractionResponse,
   FutureTasks,
   MentionedDate,
   SessionExtraction,
+  StructuringResponse,
   TaskItem,
 } from "./types.ts";
 
-export class CourseExtractionParseError extends Error {}
+export class StructuringParseError extends Error {}
 
 /**
- * responseSchema restringe a saída do Gemini mas não é garantia absoluta —
- * a validação aqui é a última linha de defesa antes do JSON entrar no resto
- * do sistema.
+ * O schema JSON estrito do Groq restringe a saída mas não é garantia
+ * absoluta — a validação aqui é a última linha de defesa antes do JSON
+ * entrar no resto do sistema.
  */
-export function parseCourseExtractionResponse(
-  rawText: string | undefined
-): CourseExtractionResponse {
+export function parseStructuringResponse(
+  rawText: string | null | undefined
+): StructuringResponse {
   if (!rawText) {
-    throw new CourseExtractionParseError("A resposta do Gemini não contém texto.");
+    throw new StructuringParseError("A resposta do Groq não contém texto.");
   }
 
   let parsed: unknown;
   try {
     parsed = JSON.parse(rawText);
   } catch (cause) {
-    throw new CourseExtractionParseError(
-      "A resposta do Gemini não é um JSON válido.",
-      { cause }
-    );
+    throw new StructuringParseError("A resposta do Groq não é um JSON válido.", {
+      cause,
+    });
   }
 
-  if (!isCourseExtractionResponse(parsed)) {
-    throw new CourseExtractionParseError(
-      "A resposta do Gemini não corresponde ao formato esperado (CourseExtractionResponse)."
+  if (!isStructuringResponse(parsed)) {
+    throw new StructuringParseError(
+      "A resposta do Groq não corresponde ao formato esperado (StructuringResponse)."
     );
   }
 
   return parsed;
 }
 
-function isCourseExtractionResponse(
-  value: unknown
-): value is CourseExtractionResponse {
+function isStructuringResponse(value: unknown): value is StructuringResponse {
   if (typeof value !== "object" || value === null) return false;
   const v = value as Record<string, unknown>;
 
-  return (
-    typeof v.full_transcript === "string" &&
-    Array.isArray(v.courses) &&
-    v.courses.every(isCourseExtraction)
-  );
+  return Array.isArray(v.courses) && v.courses.every(isCourseExtraction);
 }
 
 function isCourseExtraction(value: unknown): value is CourseExtraction {

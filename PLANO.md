@@ -4,8 +4,9 @@
 > de execução. Atualizar a cada fase concluída.
 >
 > Última atualização: 07/09/2026 · Fases 0 a 4 (4a, 4b, 4c — deploy em
-> https://ainote.douglasdans.dev/), 4.5 a 4.6 e 5 (5a-5j, interface
-> shadcn/ui + UX de upload) concluídas. Sem itens bloqueantes em aberto.
+> https://ainote.douglasdans.dev/), 4.5 a 4.6, 5 (5a-5j, interface
+> shadcn/ui + UX de upload) e 6 (pipeline de IA em 2 etapas, Gemini +
+> Groq) concluídas. Sem itens bloqueantes em aberto.
 
 ---
 
@@ -146,16 +147,19 @@ implementada) e ordenação de datas nativa para o dashboard.
 
 **Custo:** migração dos dados atuais — baixo, são poucos documentos.
 
-### 4.3 Pipeline em uma etapa
+### 4.3 Pipeline em uma etapa — **revista na Fase 6 (07/09/2026)**
 
-Áudio → uma chamada ao Gemini → JSON estruturado. Como já é hoje.
+Decisão original: áudio → uma chamada ao Gemini → JSON estruturado.
 
-**Alternativa avaliada e recusada:** duas etapas (`gemini-3.5-transcribe` →
+**Alternativa avaliada e recusada na época:** duas etapas (`gemini-3.5-transcribe` →
 texto persistido → estruturação). A vantagem seria reprocessar aulas antigas de
 graça ao melhorar o prompt; o custo seria mais complexidade. Decisão: não.
 
-**Em aberto:** a chamada única pode devolver a transcrição como um campo a mais
-do JSON, obtendo o mesmo benefício sem virar duas etapas. Decidir na Fase 2.
+**Motivo da revisão:** 503 "high demand" do Gemini acontecendo repetido em uso
+real (ver Fase 5h/5i) — o argumento de simplicidade continua válido, mas
+passou a perder pra resiliência: uma chamada única com um provedor só
+significa que qualquer instabilidade nesse provedor derruba a extração
+inteira. Ver Fase 6 para o desenho novo (duas etapas, dois provedores).
 
 ### 4.4 Normalização de datas — destrava o dashboard
 
@@ -1044,6 +1048,67 @@ o resto do projeto segue (decisão 4.1).
 **Gate:** build/test(67/67)/lint limpos, verificado no navegador:
 job criado em `aaa` aparece no indicador de `aaa`, space
 `ingest-4b-teste` não mostra nada.
+
+---
+
+### Fase 6 — Pipeline de IA em duas etapas: Gemini transcreve, Groq estrutura ✅ CONCLUÍDA
+
+Revisão da decisão 4.3 (ver acima) — motivada pelos 503 recorrentes do
+Gemini em uso real. Pesquisado antes de decidir, não assumido: nenhum
+provedor com tier gratuito de verdade faz "entender áudio + seguir schema
+JSON" numa chamada só além do Gemini (Claude não aceita áudio; OpenAI não
+tem tier gratuito permanente; Mistral/Groq só transcrevem, não estruturam
+num único call). A saída encontrada: transcrever com um modelo do Gemini e
+estruturar com outro provedor — dois provedores, resiliência real contra
+qualquer instabilidade isolada.
+
+- **Etapa 1 — `transcribeAudio.ts`:** `gemini-3.5-transcribe` (modelo
+  dedicado, capacidade separada do Flash). **Achado que só apareceu
+  testando com áudio de fala real, não silêncio:** a resposta desse modelo
+  não usa a propriedade de conveniência `.text` do SDK — o texto vem numa
+  `part` própria, `audioTranscription.text`, dentro de
+  `candidates[0].content.parts[]`. Confirmado inspecionando a resposta
+  bruta da API antes de corrigir, não assumido a partir do comportamento
+  de outros modelos Gemini.
+- **Etapa 2 — `structureTranscript.ts`:** Groq, `openai/gpt-oss-120b`,
+  schema JSON estrito (`structuringSchema.ts`) com
+  `response_format: json_schema, strict: true` — confirmado na doc oficial
+  do Groq, incluindo a sintaxe certa pra campo nulável
+  (`"type": ["string", "null"]`, não `anyOf` — testei a suposição errada
+  antes de escrever o schema final). Novo prompt dedicado
+  (`src/prompts/structuring-prompt.md`): entrada é a transcrição em texto,
+  não áudio, e não pede mais `full_transcript` de volta — esse campo já
+  vem pronto da etapa 1, evita pedir pro modelo reproduzir texto longo
+  palavra por palavra na saída.
+- **`generateCourseExtraction()` virou só orquestração:** chama as duas
+  etapas e junta o resultado (`full_transcript` da etapa 1 +
+  `recording_date`/`prompt_version` injetados, igual antes). Assinatura
+  mudou de `{ client, ... }` pra `{ geminiClient, groqClient, ... }` —
+  ripple em `processIngestionJob.ts`, no route handler de upload
+  (`POST /api/[space]/ingest`) e no script `try:ai`, todos atualizados
+  juntos. `schema.ts` (schema Gemini de chamada única) removido — código
+  morto depois da migração.
+- **`GROQ_API_KEY`** nova env var (`.env.example` atualizado). `groq-sdk`
+  adicionado como dependência.
+- **`PROMPT_VERSION` bump 3.0 → 4.0** — mudança real de comportamento do
+  pipeline, não só refactor interno.
+- **TDD:** `transcribeAudio.test.ts` e `structureTranscript.test.ts` novos
+  (client fake pra cada provedor); `generateCourseExtraction.test.ts`
+  reescrito pra orquestração; `parseCourseExtractionResponse.ts` renomeado
+  pra `parseStructuringResponse.ts` (mesmos validadores, sem o campo
+  `full_transcript` que não existe mais nessa etapa).
+- **Verificado com pipeline real de ponta a ponta** (não só testes com
+  fake): áudio de fala sintética (`espeak-ng`, já que não havia amostra
+  real disponível na hora) sobre banco de dados/normalização, com uma
+  data relativa mencionada ("próxima semana, dia 10 de setembro"). Saída:
+  transcrição fiel, resumo correto, **data resolvida certo pra
+  `2026-09-10`** usando a data de referência informada, tarefa sem data
+  mencionada corretamente marcada `"Não mencionado"` em vez de inventar
+  uma data.
+
+**Gate:** build/test(73/73)/lint limpos, pipeline real (Gemini + Groq)
+verificado de ponta a ponta com resultado de qualidade — não só o formato
+JSON correto, o conteúdo também.
 
 ---
 

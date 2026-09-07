@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
-  CourseExtractionParseError,
-  parseCourseExtractionResponse,
-} from "@/services/ai/parseCourseExtractionResponse";
+  StructuringParseError,
+  parseStructuringResponse,
+} from "@/services/ai/parseStructuringResponse";
 import type { SessionExtraction, TaskItem } from "@/services/ai/types";
 
 function validTaskItem(): TaskItem {
@@ -30,7 +30,6 @@ function validSession(): SessionExtraction {
 
 function validResponse() {
   return {
-    full_transcript: "Transcrição completa da aula...",
     courses: [
       {
         name: "Banco de Dados",
@@ -41,9 +40,9 @@ function validResponse() {
   };
 }
 
-describe("parseCourseExtractionResponse", () => {
+describe("parseStructuringResponse", () => {
   it("parses a well-formed response", () => {
-    const result = parseCourseExtractionResponse(JSON.stringify(validResponse()));
+    const result = parseStructuringResponse(JSON.stringify(validResponse()));
 
     expect(result.courses[0].name).toBe("Banco de Dados");
     expect(result.courses[0].sessions[0].title).toBe(
@@ -56,20 +55,18 @@ describe("parseCourseExtractionResponse", () => {
     payload.courses[0].sessions[0].future_tasks.items[0].due_date_iso = null;
     payload.courses[0].sessions[0].mentioned_dates[0].date_iso = null;
 
-    const result = parseCourseExtractionResponse(JSON.stringify(payload));
+    const result = parseStructuringResponse(JSON.stringify(payload));
 
     expect(result.courses[0].sessions[0].future_tasks.items[0].due_date_iso).toBeNull();
   });
 
   it("throws when there is no text at all", () => {
-    expect(() => parseCourseExtractionResponse(undefined)).toThrow(
-      CourseExtractionParseError
-    );
+    expect(() => parseStructuringResponse(undefined)).toThrow(StructuringParseError);
   });
 
   it("throws when the text is not valid JSON", () => {
-    expect(() => parseCourseExtractionResponse("isso não é json")).toThrow(
-      CourseExtractionParseError
+    expect(() => parseStructuringResponse("isso não é json")).toThrow(
+      StructuringParseError
     );
   });
 
@@ -78,9 +75,7 @@ describe("parseCourseExtractionResponse", () => {
       courses: [{ name: "Banco de Dados" /* professor ausente */ }],
     });
 
-    expect(() => parseCourseExtractionResponse(malformed)).toThrow(
-      CourseExtractionParseError
-    );
+    expect(() => parseStructuringResponse(malformed)).toThrow(StructuringParseError);
   });
 
   it("throws when due_date_iso is not a valid ISO date string", () => {
@@ -89,7 +84,7 @@ describe("parseCourseExtractionResponse", () => {
       "10/04/2026";
 
     expect(() =>
-      parseCourseExtractionResponse(JSON.stringify(payload))
-    ).toThrow(CourseExtractionParseError);
+      parseStructuringResponse(JSON.stringify(payload))
+    ).toThrow(StructuringParseError);
   });
 });

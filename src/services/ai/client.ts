@@ -1,5 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
-import type { GenAIClient } from "./generateCourseExtraction.ts";
+import type { GenAIClient } from "./transcribeAudio.ts";
 
 export function createGenAIClient(): GenAIClient {
   const apiKey = process.env.GEMINI_API_KEY;

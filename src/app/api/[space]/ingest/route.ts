@@ -6,6 +6,7 @@ import {
 } from "@/db/ingestionJob.repository";
 import { processIngestionJob } from "@/services/processIngestionJob";
 import { createGenAIClient } from "@/services/ai/client";
+import { createGroqClient } from "@/services/ai/groqClient";
 
 type Params = { params: Promise<{ space: string }> };
 
@@ -35,14 +36,16 @@ export async function POST(request: NextRequest, { params }: Params) {
 
   const job = await createIngestionJob(space.id);
 
-  // createGenAIClient() lança de forma síncrona se faltar GEMINI_API_KEY —
-  // isso não pode escapar pra fora do try/catch do processIngestionJob
-  // (que só existe dentro da função), senão a resposta HTTP inteira quebra
-  // em vez de o job simplesmente terminar como "error", que é como qualquer
-  // outra falha do pipeline já é reportada pro polling do cliente.
-  let client;
+  // createGenAIClient()/createGroqClient() lançam de forma síncrona se
+  // faltar a respectiva API key — isso não pode escapar pra fora do
+  // try/catch do processIngestionJob (que só existe dentro da função),
+  // senão a resposta HTTP inteira quebra em vez de o job simplesmente
+  // terminar como "error", que é como qualquer outra falha do pipeline já
+  // é reportada pro polling do cliente.
+  let geminiClient, groqClient;
   try {
-    client = createGenAIClient();
+    geminiClient = createGenAIClient();
+    groqClient = createGroqClient();
   } catch (error) {
     await markIngestionJobError(
       job.id,
@@ -54,7 +57,8 @@ export async function POST(request: NextRequest, { params }: Params) {
   // Fire-and-forget: não aguardamos essa promise. Só funciona porque o
   // processo roda em container de longa duração (Railway), não serverless.
   void processIngestionJob({
-    client,
+    geminiClient,
+    groqClient,
     jobId: job.id,
     spaceId: space.id,
     audioSource: audio,

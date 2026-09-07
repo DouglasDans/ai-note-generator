@@ -7,7 +7,10 @@ está pendente. Não repita aqui o que já está lá.
 ## Stack
 
 - **Next.js 15** (App Router), **React 19**, TypeScript
-- **@google/genai** — SDK oficial do Gemini (modelo: `gemini-3.8-flash`)
+- **@google/genai** — SDK oficial do Gemini, usado só pra etapa de
+  transcrição (`gemini-3.5-transcribe`)
+- **groq-sdk** — SDK oficial do Groq, usado pra etapa de estruturação em JSON
+  (`openai/gpt-oss-120b`, schema estrito) — ver seção "Pipeline de IA"
 - **Prisma 7** (`@prisma/adapter-pg`, driver adapters — sem o binário Rust
   antigo) + **Postgres**. Client gerado em `src/generated/prisma/`
   (gitignored, `npm run db:generate` para regerar). Config em
@@ -95,26 +98,43 @@ scripts/                   # utilitários executados via `node` puro — ver not
 
 ## Pipeline de IA (`src/services/ai/`)
 
-Fluxo: áudio → `generateCourseExtraction()` → upload no Gemini → chamada com
-`responseSchema` (`schema.ts`) e prompt com data injetada (`prompt.ts`) →
-validação da resposta (`parseCourseExtractionResponse.ts`) →
-`CourseExtractionResult` (`types.ts`).
+Duas etapas, dois provedores — não é mais uma chamada única (decisão 4.3
+revista em 07/09/2026, ver PLANO.md): uma instabilidade isolada num provedor
+não derruba a extração inteira.
 
-- `schema.ts` e `types.ts` descrevem a mesma forma de dado em dois lugares
-  (schema do Gemini vs. tipo TS). Se um mudar, o outro também precisa.
+Fluxo: áudio → `transcribeAudio()` (Gemini, modelo dedicado
+`gemini-3.5-transcribe`, sem schema — só texto) → transcrição →
+`structureTranscript()` (Groq, `openai/gpt-oss-120b`, schema JSON estrito em
+`structuringSchema.ts` + prompt em `src/prompts/structuring-prompt.md`) →
+validação (`parseStructuringResponse.ts`) → `generateCourseExtraction()`
+junta os dois (anexa a transcrição, injeta `recording_date`/`prompt_version`)
+→ `CourseExtractionResult` (`types.ts`).
+
+- `structuringSchema.ts` é JSON Schema puro (não o builder `Type` do
+  `@google/genai`, que só a etapa de transcrição ainda usa indiretamente via
+  `GenAIClient`) — formato exigido pelo `response_format` do Groq. Não tem
+  `full_transcript`: a transcrição já vem pronta da etapa 1, não faz sentido
+  pedir pro modelo reproduzir um texto longo palavra por palavra na saída.
+  Campos nulos usam `"type": ["string", "null"]` (sintaxe exigida pelo modo
+  estrito do Groq, confirmada na doc oficial — `anyOf` não é aceito ali).
+  `structuringSchema.ts` e `types.ts` descrevem a mesma forma de dado em dois
+  lugares; se um mudar, o outro também precisa.
   `src/db/mapCourseExtractionToRows.ts` é quem converte `types.ts` pro shape
   do Prisma (schema do banco) — ver seção "Camada de persistência".
-- `generateCourseExtraction()` recebe o client do `@google/genai` por
-  parâmetro (`GenAIClient`, interface própria — não `Pick<GoogleGenAI, ...>`,
-  porque as classes do SDK têm campos privados que quebrariam um fake de
-  teste). Isso é o que permite testar a lógica de wiring sem bater na API real.
+- `transcribeAudio()` e `structureTranscript()` recebem o client (`@google/genai`
+  e `groq-sdk`, respectivamente) por parâmetro — `GenAIClient`/`GroqClient`,
+  interfaces próprias, não `Pick<Client, ...>`, porque as classes reais têm
+  campos privados que quebrariam um fake de teste. `generateCourseExtraction()`
+  recebe os dois (`geminiClient` + `groqClient`) e só orquestra.
 - `aula.data`/`session.date` **não é pedido à IA** — quem chama já sabe essa
   data (`recordingDate`) e ela é injetada no resultado depois do parse, junto
   com `prompt_version`. Pedir pro modelo também produzir seria duplicação e
   uma chance de alucinar uma data que já se tem com certeza.
 - Testes cobrem só a lógica determinística (schema, interpolação de prompt,
-  validação, wiring da chamada) — não a chamada real ao Gemini nem a
-  qualidade do resumo, que é subjetiva.
+  validação, wiring de cada chamada, orquestração das duas etapas) — não a
+  chamada real ao Gemini/Groq nem a qualidade do resumo, que é subjetiva.
+  Verificação manual: `npm run try:ai` (exige `GEMINI_API_KEY` e
+  `GROQ_API_KEY`).
 
 ## Camada de persistência (`src/db/`)
 
@@ -147,16 +167,17 @@ validação da resposta (`parseCourseExtractionResponse.ts`) →
   `processIngestionJob()` sem `await`, e responde 202 na hora. Só funciona
   porque o processo é de longa duração no Railway — numa function
   serverless isso seria morto assim que a resposta fosse enviada.
-- `createGenAIClient()` lança de forma **síncrona** se faltar
-  `GEMINI_API_KEY`. Isso é tratado no próprio route handler (não dentro do
-  `processIngestionJob`), porque senão essa falha específica quebraria a
-  resposta HTTP inteira em vez de só marcar o job como `error` — mesmo
-  tratamento de qualquer outra falha do pipeline.
+- `createGenAIClient()` e `createGroqClient()` lançam de forma **síncrona**
+  se faltar `GEMINI_API_KEY`/`GROQ_API_KEY`. Isso é tratado no próprio route
+  handler (não dentro do `processIngestionJob`), porque senão essa falha
+  específica quebraria a resposta HTTP inteira em vez de só marcar o job
+  como `error` — mesmo tratamento de qualquer outra falha do pipeline.
 
 ## Convenção de import: `.ts` explícito em `src/services/ai/`
 
 Os módulos dentro de `src/services/ai/` importam uns aos outros com extensão
-`.ts` explícita (`from "./schema.ts"`), diferente do resto do projeto. Motivo:
+`.ts` explícita (`from "./structuringSchema.ts"`), diferente do resto do
+projeto. Motivo:
 `scripts/try-generate-course-extraction.ts` roda via `node` puro (sem bundler,
 para verificação manual contra a API real), e a resolução ESM do Node exige
 extensão explícita em imports relativos. `tsconfig.json` tem

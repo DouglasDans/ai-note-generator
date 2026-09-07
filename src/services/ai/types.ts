@@ -45,8 +45,10 @@ export interface Course {
   sessions: Session[];
 }
 
-export interface CourseExtractionResponse {
-  full_transcript: string;
+/** Forma que o Groq produz na etapa de estruturação — sem `full_transcript`,
+ * que já vem pronto da etapa de transcrição (transcribeAudio) e é anexado
+ * depois, sem precisar que o modelo reproduza um texto longo na saída. */
+export interface StructuringResponse {
   courses: CourseExtraction[];
 }
 

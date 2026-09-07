@@ -4,7 +4,7 @@ import { createSpace } from "@/db/space.repository";
 import { createIngestionJob } from "@/db/ingestionJob.repository";
 import { listCoursesBySpace } from "@/db/course.repository";
 import { processIngestionJob } from "@/services/processIngestionJob";
-import type { GenAIClient } from "@/services/ai/generateCourseExtraction";
+import type { GenAIClient, GroqClient } from "@/services/ai/generateCourseExtraction";
 
 beforeEach(async () => {
   await prisma.space.deleteMany();
@@ -14,13 +14,27 @@ afterAll(async () => {
   await prisma.$disconnect();
 });
 
-function fakeClient(text: string): GenAIClient {
+function fakeGeminiClient(transcript: string): GenAIClient {
   return {
     files: {
       upload: vi.fn().mockResolvedValue({ uri: "files/fake", mimeType: "audio/mp3" }),
     },
     models: {
-      generateContent: vi.fn().mockResolvedValue({ text }),
+      generateContent: vi
+        .fn()
+        .mockResolvedValue({
+          candidates: [{ content: { parts: [{ audioTranscription: { text: transcript } }] } }],
+        }),
+    },
+  };
+}
+
+function fakeGroqClient(content: string): GroqClient {
+  return {
+    chat: {
+      completions: {
+        create: vi.fn().mockResolvedValue({ choices: [{ message: { content } }] }),
+      },
     },
   };
 }
@@ -30,9 +44,9 @@ describe("processIngestionJob", () => {
     const space = await createSpace("fatec-gestao-2026");
     const job = await createIngestionJob(space.id);
 
-    const client = fakeClient(
+    const geminiClient = fakeGeminiClient("Transcrição.");
+    const groqClient = fakeGroqClient(
       JSON.stringify({
-        full_transcript: "Transcrição.",
         courses: [
           {
             name: "Ética",
@@ -54,7 +68,8 @@ describe("processIngestionJob", () => {
     );
 
     await processIngestionJob({
-      client,
+      geminiClient,
+      groqClient,
       jobId: job.id,
       spaceId: space.id,
       audioSource: new Blob(["fake"], { type: "audio/mp3" }),
@@ -76,11 +91,13 @@ describe("processIngestionJob", () => {
     const space = await createSpace("fatec-gestao-2026");
     const job = await createIngestionJob(space.id);
 
-    const client = fakeClient("isso não é json");
+    const geminiClient = fakeGeminiClient("Transcrição.");
+    const groqClient = fakeGroqClient("isso não é json");
 
     await expect(
       processIngestionJob({
-        client,
+        geminiClient,
+        groqClient,
         jobId: job.id,
         spaceId: space.id,
         audioSource: new Blob(["fake"], { type: "audio/mp3" }),
